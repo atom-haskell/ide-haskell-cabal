@@ -1,0 +1,23 @@
+{
+  "name": "ide-haskell-cabal",
+  "main": "./lib/ide-haskell-cabal",
+  "version": "0.0.0",
+  "description": "Provides Cabal backend for ide-haskell",
+  "keywords": [
+  ],
+  "repository": "https://github.com/atom/ide-haskell-cabal",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+  },
+  "providedServices": {
+    "haskell-ide-backend": {
+      "description": "ide-haskell support for Cabal",
+      "versions": {
+         "1.0.0": "provideIdeBackend"
+      }
+    }
+  }
+}
