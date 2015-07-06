@@ -7,7 +7,7 @@ process       = require 'process'
 
 # Regular expression to match against a location in a cabal msg (Foo.hs:3:2)
 # The [^] syntax basically means "anything at all" (including newlines)
-matchLoc = /(\S+):(\d+):(\d+):( Warning:)?\n([^]*)/
+matchLoc = /(\S+):(\d+):(\d+):( Warning:)?\n?([^]*)/
 
 # Start of a Cabal message
 startOfMessage = /\n\S/
@@ -58,17 +58,21 @@ class CabalProcess
        @parseMessage @errBuffer
 
   parseMessage: (raw) ->
-    matched = raw.match(matchLoc)
-    if matched?
-      [file, line, col, rawTyp, msg] = matched.slice(1, 6)
-      typ = if rawTyp? then "warning" else "error"
+    if raw.trim() != ""
+      matched = raw.match(matchLoc)
+      if matched?
+        [file, line, col, rawTyp, msg] = matched.slice(1, 6)
+        typ = if rawTyp? then "warning" else "error"
 
-      # TODO: The lines in the message will be indented by a fixed amount
-      # We could potentially remove this (not a big deal, of course)
-      errMsg =
-        uri: file
-        position: new Point parseInt(line) - 1, parseInt(col) - 1
-        message: msg.trimRight()
-        severity: typ
+        # TODO: The lines in the message will be indented by a fixed amount
+        # We could potentially remove this (not a big deal, of course)
+        errMsg =
+          uri: file
+          position: new Point parseInt(line) - 1, parseInt(col) - 1
+          message: msg.trimRight()
+          severity: typ
 
-      @messages.push errMsg
+        @messages.push errMsg
+      else
+        # TODO: We should able to show these somewhere
+        console.log "Unable to parse", { "msg" : raw }
