@@ -35,15 +35,18 @@ class CabalProcess
     @messages = []
 
     # We collect stderr from the process as it comes in and split it into
-    # individual errors/warnings
+    # individual errors/warnings. We also keep the unparsed error messages
+    # to show in case of a cabal failure.
     @errBuffer = ""
+    @rawErrors = ""
     proc.stderr.on 'data', (data) =>
       @errBuffer += data.toString()
+      @rawErrors += data.toString()
       @splitErrBuffer false
 
     proc.on 'close', (code, signal) =>
       @splitErrBuffer true
-      onClose code, @messages
+      onClose code, @messages, @rawErrors
 
   # Split the error buffer we have so far into messages
   splitErrBuffer: (isEOF) ->
@@ -75,4 +78,6 @@ class CabalProcess
         @messages.push errMsg
       else
         # TODO: We should able to show these somewhere
+        # Examples:
+        # "WARNING in hptSomeThingsBelowUs↵    missing module…↵    Probable cause: out-of-date interface files↵"
         console.log "Unable to parse", { "msg" : raw }

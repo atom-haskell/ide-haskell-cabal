@@ -106,9 +106,11 @@ class IdeBackend
 
   checkBuffer: (buffer, callback) =>
     # TODO: Should we pass an additional argument here?
-    # (ghc-modi-process passes something rather complicated)
     @emitter.emit 'backend-active'
-    @cabalBuild (exitCode, msgs) =>
-      # TODO: Not sure what to do with the exitCode here
+    @cabalBuild (exitCode, msgs, rawErrors) =>
       @emitter.emit 'backend-idle'
       callback msgs
+      if exitCode != 0
+        atom.notifications.addError "cabal failed with error code #{exitCode}",
+          detail: rawErrors
+          dismissable: true
