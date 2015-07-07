@@ -109,8 +109,15 @@ class IdeBackend
     @emitter.emit 'backend-active'
     @cabalBuild (exitCode, msgs, rawErrors) =>
       @emitter.emit 'backend-idle'
+      # cabal returns failure when there are type errors _or_ when it can't
+      # compile the code at all (i.e., when there are missing dependencies).
+      # Since it's hard to distinguish between these days, we look at the
+      # parsed errors; if there are any, we assume that it at least managed to
+      # start compiling (all dependencies available) and so we ignore the
+      # exit code and just report the errors. Otherwise, we show an atom error
+      # with the raw stderr output from cabal.
       callback msgs
-      if exitCode != 0
+      if exitCode != 0 && msgs.length == 0
         atom.notifications.addError "cabal failed with error code #{exitCode}",
           detail: rawErrors
           dismissable: true
