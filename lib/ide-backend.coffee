@@ -25,7 +25,7 @@ class IdeBackend
       when '7.10' then atom.config.get 'ide-haskell-cabal.' + opt + '710'
     return value.trim()
 
-  cabalBuild: (onDone) ->
+  cabalBuild: ({onMsg, onDone}) ->
     # TODO: Might want to check _either_ the project path _or_ starting from
     # the actual file
     #editor    = atom.workspace.activePaneItem
@@ -37,7 +37,7 @@ class IdeBackend
 
     if cabalFile?
       cabalArgs    = ['build', '--only', '--builddir=' + buildDir]
-      cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), onDone
+      cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), onMsg, onDone
     else
       # TODO: Give proper error message
       console.log "No cabal file found"
@@ -100,24 +100,35 @@ class IdeBackend
   onBackendIdle: (callback) =>
     @emitter.on 'backend-idle', callback
 
-  getType: (buffer, range, callback) =>
-    # we don't get type information from Cabal
-    undefined
+  onBackendWarning: (callback) =>
+    @emitter.on 'backend-warning', callback
 
-  checkBuffer: (buffer, callback) =>
+  onBackendError: (callback) =>
+    @emitter.on 'backend-error', callback
+
+  build: (target, {onMessage}) =>
     # TODO: Should we pass an additional argument here?
     @emitter.emit 'backend-active'
-    @cabalBuild (exitCode, msgs, rawErrors) =>
-      @emitter.emit 'backend-idle'
-      # cabal returns failure when there are type errors _or_ when it can't
-      # compile the code at all (i.e., when there are missing dependencies).
-      # Since it's hard to distinguish between these days, we look at the
-      # parsed errors; if there are any, we assume that it at least managed to
-      # start compiling (all dependencies available) and so we ignore the
-      # exit code and just report the errors. Otherwise, we show an atom error
-      # with the raw stderr output from cabal.
-      callback msgs
-      if exitCode != 0 && msgs.length == 0
-        atom.notifications.addError "cabal failed with error code #{exitCode}",
-          detail: rawErrors
-          dismissable: true
+    @cabalBuild
+      onMsg: (message) ->
+        onMessage message, 0.0 #second argument is 'progress', which can change from 0.0 to 1.0
+      onDone: (exitCode, hasError) =>
+        @emitter.emit 'backend-idle'
+        # cabal returns failure when there are type errors _or_ when it can't
+        # compile the code at all (i.e., when there are missing dependencies).
+        # Since it's hard to distinguish between these days, we look at the
+        # parsed errors; if there are any, we assume that it at least managed to
+        # start compiling (all dependencies available) and so we ignore the
+        # exit code and just report the errors. Otherwise, we show an atom error
+        # with the raw stderr output from cabal.
+        if exitCode != 0
+          if hasError
+            @emitter.emit 'backend-warning'
+          else
+            @emitter.emit 'backend-error'
+
+  clean: ->
+    # TODO: call `cabal clean`
+
+  getTargets: =>
+    # TODO: get targets for current project
