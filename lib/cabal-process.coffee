@@ -3,7 +3,7 @@ child_process = require 'child_process'
 process       = require 'process'
 
 # Atom dependencies
-{Point} = require 'atom'
+{Directory, Point} = require 'atom'
 
 # Regular expression to match against a location in a cabal msg (Foo.hs:3:2)
 # The [^] syntax basically means "anything at all" (including newlines)
@@ -16,6 +16,7 @@ module.exports =
 class CabalProcess
   # Spawn a process and log all messages
   constructor: (command, args, options, onMsg, onClose) ->
+    @cwd = new Directory options.cwd
     proc = child_process.spawn command, args, options
 
     # TODO: Not sure how to make the cancel available
@@ -45,26 +46,35 @@ class CabalProcess
     hasError = false
 
     proc.stderr.on 'data', (data) =>
-      msg = @parseMessage data.toString()
-      if msg?
+      @errBuffer += data.toString()
+      msgs = @splitErrBuffer false
+      for msg in msgs
+        continue unless msg?
         if msg.uri?
           hasError = true
         onMsg msg
 
     proc.on 'close', (code, signal) =>
+      msgs = @splitErrBuffer true
+      for msg in msgs
+        continue unless msg?
+        if msg.uri?
+          hasError = true
+        onMsg msg
       onClose code, hasError
 
   # Split the error buffer we have so far into messages
   splitErrBuffer: (isEOF) ->
      som = @errBuffer.search startOfMessage
-     while som >= 0
+     msgs = while som >= 0
        errMsg     = @errBuffer.substr(0, som + 1)
        @errBuffer = @errBuffer.substr(som + 1)
        som        = @errBuffer.search startOfMessage
        @parseMessage errMsg
      if isEOF
        # Try to parse whatever is left in the buffer
-       @parseMessage @errBuffer
+       msgs.push @parseMessage @errBuffer
+     msgs
 
   parseMessage: (raw) ->
     if raw.trim() != ""
@@ -75,7 +85,7 @@ class CabalProcess
 
         # TODO: The lines in the message will be indented by a fixed amount
         # We could potentially remove this (not a big deal, of course)
-        uri: file
+        uri: @cwd.getFile(file).getPath()
         position: new Point parseInt(line) - 1, parseInt(col) - 1
         message: msg.trimRight()
         severity: typ
