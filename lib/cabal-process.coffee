@@ -27,9 +27,10 @@ class CabalProcess
 
     proc.stdout.on 'data', (data) ->
       # TODO: It would be nice if we could report progress somewhere
-      onMsg
+      onMsg [
         message: data.toString()
         severity: 'build'
+      ]
 
     # TODO: For now we collect all messages before calling the callback
     # It would be better if we could call the callback incrementally (as we
@@ -52,15 +53,14 @@ class CabalProcess
         continue unless msg?
         if msg.uri?
           hasError = true
-        onMsg msg
+      onMsg msgs
 
     proc.on 'close', (code, signal) =>
       msgs = @splitErrBuffer true
       for msg in msgs
-        continue unless msg?
         if msg.uri?
           hasError = true
-        onMsg msg
+      onMsg msgs
       onClose code, hasError
 
   # Split the error buffer we have so far into messages
@@ -74,7 +74,7 @@ class CabalProcess
      if isEOF
        # Try to parse whatever is left in the buffer
        msgs.push @parseMessage @errBuffer
-     msgs
+     msgs.filter (msg) -> msg?
 
   parseMessage: (raw) ->
     if raw.trim() != ""

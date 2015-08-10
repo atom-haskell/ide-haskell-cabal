@@ -90,30 +90,25 @@ class IdeBackend
     contents = fs.readdirSync(dir)
     return file for file in contents when isCabalFile(file)
 
+  # 'status' can be 'ready', 'progress', 'error' or 'warning'
+  # 'progress' status can have opts=float for actual progress value from 0 to 1
+  emitBackendStatus: (status, opts) =>
+    @emitter.emit 'backend-status', status: status, opts: opts
+
   ### Public interface below ###
 
   name: -> "ide-haskell-cabal"
 
-  onBackendActive: (callback) =>
-    @emitter.on 'backend-active', callback
+  onBackendStatus: (callback) =>
+    @emitter.on 'backend-status', callback
 
-  onBackendIdle: (callback) =>
-    @emitter.on 'backend-idle', callback
-
-  onBackendWarning: (callback) =>
-    @emitter.on 'backend-warning', callback
-
-  onBackendError: (callback) =>
-    @emitter.on 'backend-error', callback
-
-  build: (target, {onMessage}) =>
-    # TODO: Should we pass an additional argument here?
-    @emitter.emit 'backend-active'
+  build: (target, {onMessages}) =>
+    @emitBackendStatus 'progress', 0.0 #second parameter is actual progress val.
     @cabalBuild
-      onMsg: (message) ->
-        onMessage message, 0.0 #second argument is 'progress', which can change from 0.0 to 1.0
+      onMsg: (messages) ->
+        onMessages messages
       onDone: (exitCode, hasError) =>
-        @emitter.emit 'backend-idle'
+        @emitBackendStatus 'ready'
         # cabal returns failure when there are type errors _or_ when it can't
         # compile the code at all (i.e., when there are missing dependencies).
         # Since it's hard to distinguish between these days, we look at the
@@ -123,12 +118,12 @@ class IdeBackend
         # with the raw stderr output from cabal.
         if exitCode != 0
           if hasError
-            @emitter.emit 'backend-warning'
+            @emitBackendStatus 'warning'
           else
-            @emitter.emit 'backend-error'
+            @emitBackendStatus 'error'
 
   clean: ->
     # TODO: call `cabal clean`
 
-  getTargets: =>
+  getTargets: ->
     # TODO: get targets for current project
