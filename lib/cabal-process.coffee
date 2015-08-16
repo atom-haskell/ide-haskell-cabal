@@ -3,7 +3,7 @@ child_process = require 'child_process'
 process       = require 'process'
 
 # Atom dependencies
-{Point} = require 'atom'
+{Directory, Point} = require 'atom'
 
 # Regular expression to match against a location in a cabal msg (Foo.hs:3:2)
 # The [^] syntax basically means "anything at all" (including newlines)
@@ -15,7 +15,8 @@ startOfMessage = /\n\S/
 module.exports =
 class CabalProcess
   # Spawn a process and log all messages
-  constructor: (command, args, options, onClose) ->
+  constructor: (command, args, options, onMsg, onClose) ->
+    @cwd = new Directory options.cwd
     proc = child_process.spawn command, args, options
 
     # TODO: Not sure how to make the cancel available
@@ -26,7 +27,10 @@ class CabalProcess
 
     proc.stdout.on 'data', (data) ->
       # TODO: It would be nice if we could report progress somewhere
-      console.log data.toString()
+      onMsg [
+        message: data.toString()
+        severity: 'build'
+      ]
 
     # TODO: For now we collect all messages before calling the callback
     # It would be better if we could call the callback incrementally (as we
@@ -39,26 +43,38 @@ class CabalProcess
     # to show in case of a cabal failure.
     @errBuffer = ""
     @rawErrors = ""
+
+    hasError = false
+
     proc.stderr.on 'data', (data) =>
       @errBuffer += data.toString()
-      @rawErrors += data.toString()
-      @splitErrBuffer false
+      msgs = @splitErrBuffer false
+      for msg in msgs
+        continue unless msg?
+        if msg.uri?
+          hasError = true
+      onMsg msgs
 
     proc.on 'close', (code, signal) =>
-      @splitErrBuffer true
-      onClose code, @messages, @rawErrors
+      msgs = @splitErrBuffer true
+      for msg in msgs
+        if msg.uri?
+          hasError = true
+      onMsg msgs
+      onClose code, hasError
 
   # Split the error buffer we have so far into messages
   splitErrBuffer: (isEOF) ->
      som = @errBuffer.search startOfMessage
-     while som >= 0
+     msgs = while som >= 0
        errMsg     = @errBuffer.substr(0, som + 1)
        @errBuffer = @errBuffer.substr(som + 1)
        som        = @errBuffer.search startOfMessage
        @parseMessage errMsg
      if isEOF
        # Try to parse whatever is left in the buffer
-       @parseMessage @errBuffer
+       msgs.push @parseMessage @errBuffer
+     msgs.filter (msg) -> msg?
 
   parseMessage: (raw) ->
     if raw.trim() != ""
@@ -69,15 +85,14 @@ class CabalProcess
 
         # TODO: The lines in the message will be indented by a fixed amount
         # We could potentially remove this (not a big deal, of course)
-        errMsg =
-          uri: file
-          position: new Point parseInt(line) - 1, parseInt(col) - 1
-          message: msg.trimRight()
-          severity: typ
-
-        @messages.push errMsg
+        uri: @cwd.getFile(file).getPath()
+        position: new Point parseInt(line) - 1, parseInt(col) - 1
+        message: msg.trimRight()
+        severity: typ
       else
         # TODO: We should able to show these somewhere
         # Examples:
         # "WARNING in hptSomeThingsBelowUs↵    missing module…↵    Probable cause: out-of-date interface files↵"
-        console.log "Unable to parse", { "msg" : raw }
+        # console.log "Unable to parse", { "msg" : raw }
+        message: raw
+        severity: 'build'

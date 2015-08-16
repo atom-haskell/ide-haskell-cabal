@@ -13,10 +13,10 @@
   "dependencies": {
   },
   "providedServices": {
-    "haskell-ide-backend": {
+    "haskell-build-backend": {
       "description": "ide-haskell support for Cabal",
       "versions": {
-         "1.0.0": "provideIdeBackend"
+         "0.1.1": "provideIdeBackend"
       }
     }
   }
