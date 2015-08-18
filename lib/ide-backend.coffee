@@ -95,6 +95,12 @@ class IdeBackend
   emitBackendStatus: (status, opts) =>
     @emitter.emit 'backend-status', status: status, opts: opts
 
+  emitClearMessages: (types) =>
+    @emitter.emit 'clear-messages', types
+
+  emitMessages: (msgs) =>
+    @emitter.emit 'messages', msgs
+
   ### Public interface below ###
 
   name: -> "ide-haskell-cabal"
@@ -102,11 +108,27 @@ class IdeBackend
   onBackendStatus: (callback) =>
     @emitter.on 'backend-status', callback
 
-  build: (target, {onMessages}) =>
+  onClearMessages: (callback) =>
+    @emitter.on 'clear-messages', callback
+
+  onMessages: (callback) =>
+    @emitter.on 'messages', callback
+
+  getPossibleMessageTypes: ->
+    # This is an example, these tabs are created by default atm.
+    error: {}
+    warning: {}
+    build:
+      uriFilter: false
+      autoScroll: true
+
+  build: (target) =>
     @emitBackendStatus 'progress', 0.0 #second parameter is actual progress val.
+    @emitClearMessages ['error', 'warning', 'build']
+    # ↑ This will be useful in case there are tabs like 'tests' etc.
     @cabalBuild
-      onMsg: (messages) ->
-        onMessages messages
+      onMsg: (messages) =>
+        @emitMessages messages
       onDone: (exitCode, hasError) =>
         @emitBackendStatus 'ready'
         # cabal returns failure when there are type errors _or_ when it can't
@@ -127,3 +149,10 @@ class IdeBackend
 
   getTargets: ->
     # TODO: get targets for current project
+
+  getMenu: ->
+    label: 'Cabal'
+    submenu: [
+      # This is obviously an example.
+      {label: 'Toggle', command: 'ide-haskell-cabal:toggle'}
+    ]
