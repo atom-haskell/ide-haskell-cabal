@@ -25,7 +25,7 @@ class IdeBackend
       when '7.10' then atom.config.get 'ide-haskell-cabal.' + opt + '710'
     return value.trim()
 
-  cabalBuild: ({onMsg, onDone}) ->
+  cabalBuild: (callbacks) ->
     # TODO: Might want to check _either_ the project path _or_ starting from
     # the actual file
     #editor    = atom.workspace.activePaneItem
@@ -37,7 +37,7 @@ class IdeBackend
 
     if cabalFile?
       cabalArgs    = ['build', '--only', '--builddir=' + buildDir]
-      cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), onMsg, onDone
+      cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), callbacks
     else
       # TODO: Give proper error message
       console.log "No cabal file found"
@@ -129,6 +129,8 @@ class IdeBackend
     @cabalBuild
       onMsg: (messages) =>
         @emitMessages messages
+      onProgress: (progress) =>
+        @emitBackendStatus 'progress', progress
       onDone: (exitCode, hasError) =>
         @emitBackendStatus 'ready'
         # cabal returns failure when there are type errors _or_ when it can't
