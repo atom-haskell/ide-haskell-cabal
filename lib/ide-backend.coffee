@@ -39,8 +39,11 @@ class IdeBackend
       cabalArgs    = ['build', '--only', '--builddir=' + buildDir]
       cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), callbacks
     else
-      # TODO: Give proper error message
-      console.log "No cabal file found"
+      @emitMessages [
+        message: "No cabal file found"
+        severity: 'error'
+      ]
+      @emitBackendStatus 'error'
 
   spawnOpts: (cabalRoot) ->
     # Setup default opts
