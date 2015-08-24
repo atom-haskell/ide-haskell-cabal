@@ -82,10 +82,10 @@ class IdeBackend
   containsCabalFile = (dir) ->
     isCabalFile = (file) ->
       if file.endsWith(".cabal")
-       stat = fs.statSync (path.join dir, file)
-       return stat.isFile()
+        stat = fs.statSync (path.join dir, file)
+        return stat.isFile()
       else
-       return false
+        return false
 
     contents = fs.readdirSync(dir)
     return file for file in contents when isCabalFile(file)

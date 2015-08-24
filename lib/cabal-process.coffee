@@ -29,17 +29,11 @@ class CabalProcess
       match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/
       if match?
         [_, progress, total] = match
-        onProgress(progress/total)
+        onProgress(progress / total)
       onMsg [
         message: data.toString()
         severity: 'build'
       ]
-
-    # TODO: For now we collect all messages before calling the callback
-    # It would be better if we could call the callback incrementally (as we
-    # discover messages) so that we can show messages coming in before cabal is
-    # finished. This will require upstream changes in ide-haskell however.
-    @messages = []
 
     # We collect stderr from the process as it comes in and split it into
     # individual errors/warnings. We also keep the unparsed error messages
@@ -68,16 +62,16 @@ class CabalProcess
 
   # Split the error buffer we have so far into messages
   splitErrBuffer: (isEOF) ->
-     som = @errBuffer.search startOfMessage
-     msgs = while som >= 0
-       errMsg     = @errBuffer.substr(0, som + 1)
-       @errBuffer = @errBuffer.substr(som + 1)
-       som        = @errBuffer.search startOfMessage
-       @parseMessage errMsg
-     if isEOF
-       # Try to parse whatever is left in the buffer
-       msgs.push @parseMessage @errBuffer
-     msgs.filter (msg) -> msg?
+    som = @errBuffer.search startOfMessage
+    msgs = while som >= 0
+      errMsg     = @errBuffer.substr(0, som + 1)
+      @errBuffer = @errBuffer.substr(som + 1)
+      som        = @errBuffer.search startOfMessage
+      @parseMessage errMsg
+    if isEOF
+      # Try to parse whatever is left in the buffer
+      msgs.push @parseMessage @errBuffer
+    msgs.filter (msg) -> msg?
 
   parseMessage: (raw) ->
     if raw.trim() != ""
@@ -93,9 +87,5 @@ class CabalProcess
         message: msg.trimRight()
         severity: typ
       else
-        # TODO: We should able to show these somewhere
-        # Examples:
-        # "WARNING in hptSomeThingsBelowUs↵    missing module…↵    Probable cause: out-of-date interface files↵"
-        # console.log "Unable to parse", { "msg" : raw }
         message: raw
         severity: 'build'
