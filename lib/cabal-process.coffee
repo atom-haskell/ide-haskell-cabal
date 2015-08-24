@@ -73,6 +73,19 @@ class CabalProcess
       msgs.push @parseMessage @errBuffer
     msgs.filter (msg) -> msg?
 
+  unindentMessage: (message) ->
+    lines = message.split('\n')
+    minIndent = null
+    for line in lines
+      match = line.match /^[\t\s]*/
+      lineIndent = match[0].length
+      minIndent = lineIndent if lineIndent < minIndent or not minIndent?
+    if minIndent?
+      lines = for line in lines
+        line.slice(minIndent)
+    lines.join('\n')
+
+
   parseMessage: (raw) ->
     if raw.trim() != ""
       matched = raw.match(matchLoc)
@@ -80,11 +93,9 @@ class CabalProcess
         [file, line, col, rawTyp, msg] = matched.slice(1, 6)
         typ = if rawTyp? then "warning" else "error"
 
-        # TODO: The lines in the message will be indented by a fixed amount
-        # We could potentially remove this (not a big deal, of course)
         uri: @cwd.getFile(file).getPath()
         position: new Point parseInt(line) - 1, parseInt(col) - 1
-        message: msg.trimRight()
+        message: @unindentMessage(msg.trimRight())
         severity: typ
       else
         message: raw
