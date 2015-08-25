@@ -15,15 +15,14 @@ startOfMessage = /\n\S/
 module.exports =
 class CabalProcess
   # Spawn a process and log all messages
-  constructor: (command, args, options, {onMsg, onProgress, onDone}) ->
+  constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction}) ->
     @cwd = new Directory options.cwd
     proc = child_process.spawn command, args, options
 
-    # TODO: Not sure how to make the cancel available
-    # @configureButton "Cancel", (msgView) ->
-    #   # Kill the entire process group
-    #   # (E.g., if cabal spawns ghc, kill both)
-    #   process.kill -proc.pid, 'SIGTERM'
+    setCancelAction ->
+      # Kill the entire process group
+      # (E.g., if cabal spawns ghc, kill both)
+      process.kill -proc.pid, 'SIGTERM'
 
     proc.stdout.on 'data', (data) ->
       match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/

@@ -16,7 +16,7 @@
     "haskell-build-backend": {
       "description": "ide-haskell support for Cabal",
       "versions": {
-         "0.2.0": "provideIdeBackend"
+         "0.3.0": "provideIdeBackend"
       }
     }
   }

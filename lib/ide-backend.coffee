@@ -125,11 +125,12 @@ class IdeBackend
       uriFilter: false
       autoScroll: true
 
-  build: (target) =>
+  build: (target, {setCancelAction}) =>
     @emitBackendStatus 'progress', 0.0 #second parameter is actual progress val.
     @emitClearMessages ['error', 'warning', 'build']
     # ↑ This will be useful in case there are tabs like 'tests' etc.
     @cabalBuild
+      setCancelAction: setCancelAction
       onMsg: (messages) =>
         @emitMessages messages
       onProgress: (progress) =>
