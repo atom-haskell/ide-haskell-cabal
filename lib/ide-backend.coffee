@@ -25,7 +25,9 @@ class IdeBackend
       when '7.10' then atom.config.get 'ide-haskell-cabal.' + opt + '710'
     return value.trim()
 
-  cabalBuild: (callbacks) ->
+  cabalBuild: (cmd, callbacks) ->
+    # TODO: It shouldn't be possible to call this function until cabalProcess
+    # exits. Otherwise, problems will ensue.
     # TODO: Might want to check _either_ the project path _or_ starting from
     # the actual file
     #editor    = atom.workspace.activePaneItem
@@ -36,7 +38,12 @@ class IdeBackend
     buildDir = @getConfigOpt 'buildDir'
 
     if cabalFile?
-      cabalArgs    = ['build', '--only', '--builddir=' + buildDir]
+      cabalArgs =
+        switch cmd
+          when 'build'
+            [cmd, '--only', '--builddir=' + buildDir]
+          when 'clean'
+            [cmd, '--builddir=' + buildDir]
       cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), callbacks
     else
       @emitMessages [
@@ -129,7 +136,7 @@ class IdeBackend
     @emitBackendStatus 'progress', 0.0 #second parameter is actual progress val.
     @emitClearMessages ['error', 'warning', 'build']
     # ↑ This will be useful in case there are tabs like 'tests' etc.
-    @cabalBuild
+    @cabalBuild 'build',
       setCancelAction: setCancelAction
       onMsg: (messages) =>
         @emitMessages messages
@@ -151,7 +158,15 @@ class IdeBackend
             @emitBackendStatus 'error'
 
   clean: ->
-    # TODO: call `cabal clean`
+    @emitBackendStatus 'progress', 0.0
+    @emitClearMessages ['build']
+    @cabalBuild 'clean',
+      onMsg: (messages) =>
+        @emitMessages messages
+      onDone: (exitCode) =>
+        @emitBackendStatus 'ready'
+        if exitCode != 0
+          @emitBackendStatus 'error'
 
   getTargets: ->
     # TODO: get targets for current project

@@ -19,7 +19,7 @@ class CabalProcess
     @cwd = new Directory options.cwd
     proc = child_process.spawn command, args, options
 
-    setCancelAction ->
+    setCancelAction? ->
       # Kill the entire process group
       # (E.g., if cabal spawns ghc, kill both)
       process.kill -proc.pid, 'SIGTERM'
@@ -28,8 +28,8 @@ class CabalProcess
       match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/
       if match?
         [_, progress, total] = match
-        onProgress(progress / total)
-      onMsg [
+        onProgress?(progress / total)
+      onMsg? [
         message: data.toString()
         severity: 'build'
       ]
@@ -49,15 +49,15 @@ class CabalProcess
         continue unless msg?
         if msg.uri?
           hasError = true
-      onMsg msgs
+      onMsg? msgs
 
     proc.on 'close', (code, signal) =>
       msgs = @splitErrBuffer true
       for msg in msgs
         if msg.uri?
           hasError = true
-      onMsg msgs
-      onDone code, hasError
+      onMsg? msgs
+      onDone? code, hasError
 
   # Split the error buffer we have so far into messages
   splitErrBuffer: (isEOF) ->
