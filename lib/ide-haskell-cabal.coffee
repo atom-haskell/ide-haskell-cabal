@@ -10,6 +10,9 @@ module.exports = IdeHaskellCabal =
   activate: (state) ->
     # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
     @subscriptions = new CompositeDisposable
+    @subscriptions.add atom.commands.add 'atom-workspace',
+      'ide-haskell-cabal:test': =>
+        @ideBackend?.test?()
 
   deactivate: ->
     @subscriptions.dispose()

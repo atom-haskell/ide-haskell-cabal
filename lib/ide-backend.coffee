@@ -40,9 +40,9 @@ class IdeBackend
     if cabalFile?
       cabalArgs =
         switch cmd
-          when 'build'
+          when 'build', 'test'
             [cmd, '--only', '--builddir=' + buildDir]
-          when 'clean'
+          else
             [cmd, '--builddir=' + buildDir]
       cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), callbacks
     else
@@ -131,6 +131,9 @@ class IdeBackend
     build:
       uriFilter: false
       autoScroll: true
+    test:
+      uriFilter: false
+      autoScroll: true
 
   build: (target, {setCancelAction}) =>
     @emitBackendStatus 'progress', 0.0 #second parameter is actual progress val.
@@ -168,6 +171,19 @@ class IdeBackend
         if exitCode != 0
           @emitBackendStatus 'error'
 
+  test: ->
+    @emitBackendStatus 'progress', 0.0
+    @emitClearMessages ['test']
+    @cabalBuild 'test',
+      onMsg: (messages) =>
+        @emitMessages messages.map (msg) ->
+          msg.severity = 'test' if msg.severity is 'build'
+          msg
+      onDone: (exitCode) =>
+        @emitBackendStatus 'ready'
+        if exitCode != 0
+          @emitBackendStatus 'error'
+
   getTargets: ->
     # TODO: get targets for current project
 
@@ -175,5 +191,5 @@ class IdeBackend
     label: 'Cabal'
     submenu: [
       # This is obviously an example.
-      {label: 'Toggle', command: 'ide-haskell-cabal:toggle'}
+      {label: 'Test', command: 'ide-haskell-cabal:test'}
     ]
