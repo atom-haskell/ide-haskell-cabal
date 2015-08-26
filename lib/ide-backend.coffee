@@ -7,6 +7,7 @@ fs   = require 'fs'
 
 # Internal dependencies
 CabalProcess = require './cabal-process'
+HaskellCabal = require '../hs/HaskellCabal.min.js'
 
 module.exports =
 class IdeBackend
@@ -25,7 +26,7 @@ class IdeBackend
       when '7.10' then atom.config.get 'ide-haskell-cabal.' + opt + '710'
     return value.trim()
 
-  cabalBuild: (cmd, callbacks) ->
+  cabalBuild: (cmd, callbacks) =>
     # TODO: It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
     # TODO: Might want to check _either_ the project path _or_ starting from
@@ -34,17 +35,19 @@ class IdeBackend
     #editorCwd = path.dirname(editor.getPath())
     #cabalRoot = findCabalRoot editorCwd
 
-    [cabalRoot, cabalFile] = findCabalFile atom.project.getPaths()[0]
+    [cabalRoot, cabalFile] = @findCabalFile atom.project.getPaths()[0]
     buildDir = @getConfigOpt 'buildDir'
 
     if cabalFile?
-      cabalArgs =
-        switch cmd
-          when 'build', 'test'
-            [cmd, '--only', '--builddir=' + buildDir]
-          else
-            [cmd, '--builddir=' + buildDir]
-      cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), callbacks
+      @parseCabalFile (path.join cabalRoot, cabalFile), (cabalParsed) =>
+        console.log "cabalParsed", JSON.stringify(cabalParsed)
+        cabalArgs =
+          switch cmd
+            when 'build', 'test'
+              [cmd, '--only', '--builddir=' + buildDir]
+            else
+              [cmd, '--builddir=' + buildDir]
+        cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), callbacks
     else
       @emitMessages [
         message: "No cabal file found"
@@ -79,17 +82,17 @@ class IdeBackend
   #
   # Returns an array containing the directory of the cabal file and the name of
   # the cabal file. The latter will be `null` if not found.
-  findCabalFile = (cwd) ->
+  findCabalFile: (cwd) =>
     notRoot = (dir) -> dir != path.join dir, ".."
 
-    while not containsCabalFile?(cwd) and notRoot(cwd)
+    while not @containsCabalFile?(cwd) and notRoot(cwd)
       cwd = path.join cwd, ".."
 
-    [cwd, containsCabalFile cwd]
+    [cwd, @containsCabalFile cwd]
 
   # Check if a directory contains a Cabal file
   # Returns the path to the cabal file if found or undefined otherwise
-  containsCabalFile = (dir) ->
+  containsCabalFile: (dir) ->
     isCabalFile = (file) ->
       if file.endsWith(".cabal")
         stat = fs.statSync (path.join dir, file)
@@ -99,6 +102,11 @@ class IdeBackend
 
     contents = fs.readdirSync(dir)
     return file for file in contents when isCabalFile(file)
+
+  # Call into Cabal to parse the .cabal file
+  parseCabalFile: (path, callback) =>
+    fs.readFile path, {encoding: 'utf8'}, (err, data) ->
+      HaskellCabal.parseDotCabal data, callback
 
   # 'status' can be 'ready', 'progress', 'error' or 'warning'
   # 'progress' status can have opts=float for actual progress value from 0 to 1
