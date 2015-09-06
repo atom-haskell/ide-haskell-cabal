@@ -26,7 +26,7 @@ class IdeBackend
       when '7.10' then atom.config.get 'ide-haskell-cabal.' + opt + '710'
     return value.trim()
 
-  cabalBuild: (cmd, callbacks) =>
+  cabalBuild: (cmd, opts) =>
     # TODO: It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
     # TODO: Might want to check _either_ the project path _or_ starting from
@@ -34,20 +34,20 @@ class IdeBackend
     #editor    = atom.workspace.activePaneItem
     #editorCwd = path.dirname(editor.getPath())
     #cabalRoot = findCabalRoot editorCwd
+    target = opts.target
 
     [cabalRoot, cabalFile] = @findCabalFile atom.project.getPaths()[0]
     buildDir = @getConfigOpt 'buildDir'
 
     if cabalFile?
-      @parseCabalFile (path.join cabalRoot, cabalFile), (cabalParsed) =>
-        console.log "cabalParsed", JSON.stringify(cabalParsed)
-        cabalArgs =
-          switch cmd
-            when 'build', 'test'
-              [cmd, '--only', '--builddir=' + buildDir]
-            else
-              [cmd, '--builddir=' + buildDir]
-        cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), callbacks
+      cabalArgs =
+        switch cmd
+          when 'build', 'test'
+            [cmd, '--only', '--builddir=' + buildDir]
+          else
+            [cmd, '--builddir=' + buildDir]
+      cabalArgs.push target if target? and cmd is 'build'
+      cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
     else
       @emitMessages [
         message: "No cabal file found"
@@ -104,7 +104,7 @@ class IdeBackend
     return file for file in contents when isCabalFile(file)
 
   # Call into Cabal to parse the .cabal file
-  parseCabalFile: (path, callback) =>
+  parseCabalFile: (path, callback) ->
     fs.readFile path, {encoding: 'utf8'}, (err, data) ->
       HaskellCabal.parseDotCabal data, callback
 
@@ -148,6 +148,7 @@ class IdeBackend
     @emitClearMessages ['error', 'warning', 'build']
     # ↑ This will be useful in case there are tabs like 'tests' etc.
     @cabalBuild 'build',
+      target: target
       setCancelAction: setCancelAction
       onMsg: (messages) =>
         @emitMessages messages
@@ -193,11 +194,13 @@ class IdeBackend
           @emitBackendStatus 'error'
 
   getTargets: ->
-    # TODO: get targets for current project
+    [cabalRoot, cabalFile] = @findCabalFile atom.project.getPaths()[0]
+    new Promise (resolve) =>
+      @parseCabalFile (path.join cabalRoot, cabalFile), (cabalParsed) ->
+        resolve cabalParsed
 
   getMenu: ->
     label: 'Cabal'
     submenu: [
-      # This is obviously an example.
       {label: 'Test', command: 'ide-haskell-cabal:test'}
     ]
