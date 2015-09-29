@@ -40,12 +40,13 @@ class IdeBackend
     buildDir = @getConfigOpt 'buildDir'
 
     if cabalFile?
-      cabalArgs =
-        switch cmd
-          when 'build', 'test'
-            [cmd, '--only', '--builddir=' + buildDir]
-          else
-            [cmd, '--builddir=' + buildDir]
+      cabalArgs = [cmd]
+      switch cmd
+        when 'build', 'test'
+          cabalArgs.push '--only'
+        when 'clean'
+          cabalArgs.push '--save-configure'
+      cabalArgs.push '--builddir=' + buildDir
       cabalArgs.push target if target? and cmd is 'build'
       cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
     else
