@@ -4,8 +4,13 @@
   "version": "0.0.0",
   "description": "Provides Cabal backend for ide-haskell",
   "keywords": [
+    "ide-haskell",
+    "ide",
+    "haskell",
+    "plugin",
+    "cabal"
   ],
-  "repository": "https://github.com/atom/ide-haskell-cabal",
+  "repository": "https://github.com/atom-haskell/ide-haskell-cabal",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
