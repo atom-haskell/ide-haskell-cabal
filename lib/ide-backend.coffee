@@ -26,17 +26,22 @@ class IdeBackend
       when '7.10' then atom.config.get 'ide-haskell-cabal.' + opt + '710'
     return value.trim()
 
+  getActiveProjectPath: ->
+    # TODO: This is far from optimal, and it would be better to allow specifying
+    # active project here, but I don't have too much time on my hands right now
+    # - Nick
+    editor = atom.workspace.getActiveTextEditor()
+    if editor?.getPath?()?
+      path.dirname editor.getPath()
+    else
+      atom.project.getPaths()[0]
+
   cabalBuild: (cmd, opts) =>
     # TODO: It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
-    # TODO: Might want to check _either_ the project path _or_ starting from
-    # the actual file
-    #editor    = atom.workspace.activePaneItem
-    #editorCwd = path.dirname(editor.getPath())
-    #cabalRoot = findCabalRoot editorCwd
     target = opts.target
 
-    [cabalRoot, cabalFile] = @findCabalFile atom.project.getPaths()[0]
+    [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
     buildDir = @getConfigOpt 'buildDir'
 
     if cabalFile?
@@ -195,7 +200,7 @@ class IdeBackend
           @emitBackendStatus 'error'
 
   getTargets: ->
-    [cabalRoot, cabalFile] = @findCabalFile atom.project.getPaths()[0]
+    [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
     new Promise (resolve) =>
       @parseCabalFile (path.join cabalRoot, cabalFile), (cabalParsed) ->
         resolve cabalParsed
