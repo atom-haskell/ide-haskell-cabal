@@ -12,9 +12,8 @@ HaskellCabal = require '../hs/HaskellCabal.min.js'
 module.exports =
 class IdeBackend
 
-  constructor: ->
+  constructor: (@upi) ->
     @disposables = new CompositeDisposable
-    @disposables.add @emitter = new Emitter
 
   # Get configuration option for active GHC
   getConfigOpt: (opt) ->
@@ -114,54 +113,23 @@ class IdeBackend
     fs.readFile path, {encoding: 'utf8'}, (err, data) ->
       HaskellCabal.parseDotCabal data, callback
 
-  # 'status' can be 'ready', 'progress', 'error' or 'warning'
-  # 'progress' status can have opts=float for actual progress value from 0 to 1
-  emitBackendStatus: (status, opts) =>
-    @emitter.emit 'backend-status', status: status, opts: opts
-
-  emitClearMessages: (types) =>
-    @emitter.emit 'clear-messages', types
-
-  emitMessages: (msgs) =>
-    @emitter.emit 'messages', msgs
-
   ### Public interface below ###
 
-  name: -> "ide-haskell-cabal"
+  build: (target) =>
+    @upi.setStatus status: 'progress', progress: 0.0
+    @upi.clearMessages ['error', 'warning', 'build']
 
-  onBackendStatus: (callback) =>
-    @emitter.on 'backend-status', callback
-
-  onClearMessages: (callback) =>
-    @emitter.on 'clear-messages', callback
-
-  onMessages: (callback) =>
-    @emitter.on 'messages', callback
-
-  getPossibleMessageTypes: ->
-    # This is an example, these tabs are created by default atm.
-    error: {}
-    warning: {}
-    build:
-      uriFilter: false
-      autoScroll: true
-    test:
-      uriFilter: false
-      autoScroll: true
-
-  build: (target, {setCancelAction}) =>
-    @emitBackendStatus 'progress', 0.0 #second parameter is actual progress val.
-    @emitClearMessages ['error', 'warning', 'build']
-    # ↑ This will be useful in case there are tabs like 'tests' etc.
     @cabalBuild 'build',
       target: target
-      setCancelAction: setCancelAction
+      setCancelAction: (action) =>
+        @cancelActionDisp = @upi.onActionCancelled action
       onMsg: (messages) =>
-        @emitMessages messages
+        @upi.addMessages messages
       onProgress: (progress) =>
-        @emitBackendStatus 'progress', progress
+        @upi.setStatus {status: 'progress', progress}
       onDone: (exitCode, hasError) =>
-        @emitBackendStatus 'ready'
+        @cancelActionDisp.dispose()
+        @upi.setStatus status: 'ready'
         # cabal returns failure when there are type errors _or_ when it can't
         # compile the code at all (i.e., when there are missing dependencies).
         # Since it's hard to distinguish between these days, we look at the
@@ -171,42 +139,38 @@ class IdeBackend
         # with the raw stderr output from cabal.
         if exitCode != 0
           if hasError
-            @emitBackendStatus 'warning'
+            @upi.setStatus status: 'warning'
           else
-            @emitBackendStatus 'error'
+            @upi.setStatus status: 'error'
 
   clean: ->
-    @emitBackendStatus 'progress', 0.0
-    @emitClearMessages ['build']
+    @upi.setStatus status: 'progress'
+    @upi.clearMessages ['build']
     @cabalBuild 'clean',
       onMsg: (messages) =>
-        @emitMessages messages
+        @upi.addMessages messages
       onDone: (exitCode) =>
-        @emitBackendStatus 'ready'
+        @upi.setStatus status: 'ready'
         if exitCode != 0
-          @emitBackendStatus 'error'
+          @upi.setStatus status: 'error'
 
   test: ->
-    @emitBackendStatus 'progress', 0.0
-    @emitClearMessages ['test']
+    @upi.setStatus status: 'progress'
+    @upi.clearMessages ['test']
     @cabalBuild 'test',
       onMsg: (messages) =>
-        @emitMessages messages.map (msg) ->
-          msg.severity = 'test' if msg.severity is 'build'
-          msg
+        @upi.addMessages (messages
+          .filter ({severity}) -> severity is 'build'
+          .map (msg) ->
+            msg.severity = 'test'
+            msg)
       onDone: (exitCode) =>
-        @emitBackendStatus 'ready'
+        @upi.setStatus status: 'ready'
         if exitCode != 0
-          @emitBackendStatus 'error'
+          @upi.setStatus status: 'error'
 
   getTargets: ->
     [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
     new Promise (resolve) =>
       @parseCabalFile (path.join cabalRoot, cabalFile), (cabalParsed) ->
         resolve cabalParsed
-
-  getMenu: ->
-    label: 'Cabal'
-    submenu: [
-      {label: 'Test', command: 'ide-haskell-cabal:test'}
-    ]
