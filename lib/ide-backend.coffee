@@ -44,7 +44,7 @@ class IdeBackend
     if editor?.getPath?()?
       path.dirname editor.getPath()
     else
-      atom.project.getPaths()[0]
+      atom.project.getPaths()[0] ? process.cwd()
 
   cabalBuild: (cmd, opts) =>
     # TODO: It shouldn't be possible to call this function until cabalProcess
@@ -65,11 +65,7 @@ class IdeBackend
       cabalArgs.push target if target? and cmd is 'build'
       cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
     else
-      @emitMessages [
-        message: "No cabal file found"
-        severity: 'error'
-      ]
-      @emitBackendStatus 'error'
+      @cabalFileError()
 
   spawnOpts: (cabalRoot) ->
     # Setup default opts
@@ -206,9 +202,19 @@ class IdeBackend
 
   setTarget: ({onComplete}) ->
     [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
+    unless cabalRoot? and cabalFile?
+      @cabalFileError()
+      return
     @parseCabalFile (path.join cabalRoot, cabalFile), (targets) =>
       new TargetListView
         items: targets.targets
         onConfirmed: (@buildTarget) =>
           @showTarget()
           onComplete? @buildTarget
+
+  cabalFileError: ->
+    @upi.addMessages [
+      message: 'No cabal file found'
+      severity: 'error'
+    ]
+    @upi.setStatus status: 'error'
