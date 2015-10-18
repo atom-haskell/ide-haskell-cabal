@@ -16,6 +16,8 @@ class IdeBackend
   constructor: (@upi) ->
     @disposables = new CompositeDisposable
 
+    @buildTarget = {name: 'All'}
+
     @disposables.add @upi.addPanelControl @targetElem = (document.createElement 'ide-haskell-target'),
       events:
         click: ->
@@ -203,14 +205,9 @@ class IdeBackend
       @targetElem.innerText = "#{name}"
 
   setTarget: ->
-    @getTargets().then (targets) =>
+    [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
+    @parseCabalFile (path.join cabalRoot, cabalFile), (targets) =>
       new TargetListView
         items: targets.targets
         onConfirmed: (@buildTarget) =>
           @showTarget()
-
-  getTargets: ->
-    [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
-    new Promise (resolve) =>
-      @parseCabalFile (path.join cabalRoot, cabalFile), (cabalParsed) ->
-        resolve cabalParsed
