@@ -8,12 +8,21 @@ fs   = require 'fs'
 # Internal dependencies
 CabalProcess = require './cabal-process'
 HaskellCabal = require '../hs/HaskellCabal.min.js'
+TargetListView = require './views/target-list-view'
 
 module.exports =
 class IdeBackend
 
   constructor: (@upi) ->
     @disposables = new CompositeDisposable
+
+    @disposables.add @upi.addPanelControl @targetElem = (document.createElement 'ide-haskell-target'),
+      events:
+        click: ->
+          atom.commands.dispatch atom.views.getView(atom.workspace),
+            'ide-haskell-cabal:set-build-target'
+      before: '#progressBar'
+    @showTarget()
 
   # Get configuration option for active GHC
   getConfigOpt: (opt) ->
@@ -115,20 +124,26 @@ class IdeBackend
 
   ### Public interface below ###
 
-  build: (target) =>
+  build: ->
     @upi.setStatus status: 'progress', progress: 0.0
     @upi.clearMessages ['error', 'warning', 'build']
 
+    cancelActionDisp = null
     @cabalBuild 'build',
-      target: target
+      target: @buildTarget.target
       setCancelAction: (action) =>
-        @cancelActionDisp = @upi.onActionCancelled action
+        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
+          classes: ['cancel']
+          events:
+            click: ->
+              action
+          before: '#progressBar'
       onMsg: (messages) =>
         @upi.addMessages messages
       onProgress: (progress) =>
         @upi.setStatus {status: 'progress', progress}
       onDone: (exitCode, hasError) =>
-        @cancelActionDisp.dispose()
+        cancelActionDisp?.dispose?()
         @upi.setStatus status: 'ready'
         # cabal returns failure when there are type errors _or_ when it can't
         # compile the code at all (i.e., when there are missing dependencies).
@@ -147,6 +162,7 @@ class IdeBackend
     @upi.setStatus status: 'progress'
     @upi.clearMessages ['build']
     @cabalBuild 'clean',
+      target: @buildTarget.target
       onMsg: (messages) =>
         @upi.addMessages messages
       onDone: (exitCode) =>
@@ -157,7 +173,16 @@ class IdeBackend
   test: ->
     @upi.setStatus status: 'progress'
     @upi.clearMessages ['test']
+    cancelActionDisp = null
     @cabalBuild 'test',
+      target: @buildTarget.target
+      setCancelAction: (action) =>
+        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
+          classes: ['cancel']
+          events:
+            click: ->
+              action
+          before: '#progressBar'
       onMsg: (messages) =>
         @upi.addMessages (messages
           .filter ({severity}) -> severity is 'build'
@@ -165,9 +190,24 @@ class IdeBackend
             msg.severity = 'test'
             msg)
       onDone: (exitCode) =>
+        cancelActionDisp?.dispose?()
         @upi.setStatus status: 'ready'
         if exitCode != 0
           @upi.setStatus status: 'error'
+
+  showTarget: ->
+    {type, name} = @buildTarget ? {name: "All"}
+    if type
+      @targetElem.innerText = "#{name} (#{type})"
+    else
+      @targetElem.innerText = "#{name}"
+
+  setTarget: ->
+    @getTargets().then (targets) =>
+      new TargetListView
+        items: targets.targets
+        onConfirmed: (@buildTarget) =>
+          @showTarget()
 
   getTargets: ->
     [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
