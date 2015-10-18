@@ -13,10 +13,10 @@ TargetListView = require './views/target-list-view'
 module.exports =
 class IdeBackend
 
-  constructor: (@upi) ->
+  constructor: (@upi, state) ->
     @disposables = new CompositeDisposable
 
-    @buildTarget = {name: 'All'}
+    @buildTarget = state?.target ? {name: 'All'}
 
     @disposables.add @upi.addPanelControl @targetElem = (document.createElement 'ide-haskell-target'),
       events:
@@ -204,10 +204,11 @@ class IdeBackend
     else
       @targetElem.innerText = "#{name}"
 
-  setTarget: ->
+  setTarget: ({onComplete}) ->
     [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
     @parseCabalFile (path.join cabalRoot, cabalFile), (targets) =>
       new TargetListView
         items: targets.targets
         onConfirmed: (@buildTarget) =>
           @showTarget()
+          onComplete? @buildTarget

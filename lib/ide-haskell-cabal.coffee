@@ -9,12 +9,14 @@ module.exports = IdeHaskellCabal =
 
   activate: (@state) ->
 
+  serialize: ->
+    target: @target
+
   consumeUPI: (upi) ->
-    console.log "consumeUPI"
     disposables = new CompositeDisposable
     disposables.add upi.disposables
 
-    backend = new IdeBackend(upi)
+    backend = new IdeBackend(upi, @state)
 
     upi.setMessageTypes
       error: {}
@@ -33,8 +35,8 @@ module.exports = IdeHaskellCabal =
         backend.clean()
       'ide-haskell-cabal:test': ->
         backend.test()
-      'ide-haskell-cabal:set-build-target': ->
-        backend.setTarget()
+      'ide-haskell-cabal:set-build-target': =>
+        backend.setTarget onComplete: (@target) =>
 
     upi.setMenu 'Cabal', [
         {label: 'Build Project', command: 'ide-haskell-cabal:build'}
