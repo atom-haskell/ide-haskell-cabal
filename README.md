@@ -10,3 +10,17 @@ It supports easy switching between multiple versions of GHC by having a set of c
 * The build directory (cabal `--builddir` parameter). This defaults to `dist/`.
 
 It also provides support for `ide-haskell`'s build target selection by reading and parsing the `.cabal` file and extracting the available targets (it uses a thin `ghcjs`-compiled wrapper around the `Cabal` library to read the .`cabal` file).
+
+## Keybindings
+
+Ide-Haskell-Cabal comes with little pre-specified keybindings, so you will need to specify your own, if you want those.
+
+You can edit Atom keybindings by opening 'Edit → Open Your Keymap'. Here is a template for all commands, provided by ide-haskell-cabal:
+
+```cson
+'atom-workspace':
+  '': 'ide-haskell-cabal:build'
+  '': 'ide-haskell-cabal:set-build-target'
+  '': 'ide-haskell-cabal:clean'
+  '': 'ide-haskell-cabal:test'
+```

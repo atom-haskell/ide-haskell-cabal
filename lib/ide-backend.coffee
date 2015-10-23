@@ -8,13 +8,23 @@ fs   = require 'fs'
 # Internal dependencies
 CabalProcess = require './cabal-process'
 HaskellCabal = require '../hs/HaskellCabal.min.js'
+TargetListView = require './views/target-list-view'
 
 module.exports =
 class IdeBackend
 
-  constructor: ->
+  constructor: (@upi, state) ->
     @disposables = new CompositeDisposable
-    @disposables.add @emitter = new Emitter
+
+    @buildTarget = state?.target ? {name: 'All'}
+
+    @disposables.add @upi.addPanelControl @targetElem = (document.createElement 'ide-haskell-target'),
+      events:
+        click: ->
+          atom.commands.dispatch atom.views.getView(atom.workspace),
+            'ide-haskell-cabal:set-build-target'
+      before: '#progressBar'
+    @showTarget()
 
   # Get configuration option for active GHC
   getConfigOpt: (opt) ->
@@ -34,7 +44,7 @@ class IdeBackend
     if editor?.getPath?()?
       path.dirname editor.getPath()
     else
-      atom.project.getPaths()[0]
+      atom.project.getPaths()[0] ? process.cwd()
 
   cabalBuild: (cmd, opts) =>
     # TODO: It shouldn't be possible to call this function until cabalProcess
@@ -55,11 +65,7 @@ class IdeBackend
       cabalArgs.push target if target? and cmd is 'build'
       cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
     else
-      @emitMessages [
-        message: "No cabal file found"
-        severity: 'error'
-      ]
-      @emitBackendStatus 'error'
+      @cabalFileError()
 
   spawnOpts: (cabalRoot) ->
     # Setup default opts
@@ -114,54 +120,29 @@ class IdeBackend
     fs.readFile path, {encoding: 'utf8'}, (err, data) ->
       HaskellCabal.parseDotCabal data, callback
 
-  # 'status' can be 'ready', 'progress', 'error' or 'warning'
-  # 'progress' status can have opts=float for actual progress value from 0 to 1
-  emitBackendStatus: (status, opts) =>
-    @emitter.emit 'backend-status', status: status, opts: opts
-
-  emitClearMessages: (types) =>
-    @emitter.emit 'clear-messages', types
-
-  emitMessages: (msgs) =>
-    @emitter.emit 'messages', msgs
-
   ### Public interface below ###
 
-  name: -> "ide-haskell-cabal"
+  build: ->
+    @upi.setStatus status: 'progress', progress: 0.0
+    @upi.clearMessages ['error', 'warning', 'build']
 
-  onBackendStatus: (callback) =>
-    @emitter.on 'backend-status', callback
-
-  onClearMessages: (callback) =>
-    @emitter.on 'clear-messages', callback
-
-  onMessages: (callback) =>
-    @emitter.on 'messages', callback
-
-  getPossibleMessageTypes: ->
-    # This is an example, these tabs are created by default atm.
-    error: {}
-    warning: {}
-    build:
-      uriFilter: false
-      autoScroll: true
-    test:
-      uriFilter: false
-      autoScroll: true
-
-  build: (target, {setCancelAction}) =>
-    @emitBackendStatus 'progress', 0.0 #second parameter is actual progress val.
-    @emitClearMessages ['error', 'warning', 'build']
-    # ↑ This will be useful in case there are tabs like 'tests' etc.
+    cancelActionDisp = null
     @cabalBuild 'build',
-      target: target
-      setCancelAction: setCancelAction
+      target: @buildTarget.target
+      setCancelAction: (action) =>
+        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
+          classes: ['cancel']
+          events:
+            click: ->
+              action
+          before: '#progressBar'
       onMsg: (messages) =>
-        @emitMessages messages
+        @upi.addMessages messages
       onProgress: (progress) =>
-        @emitBackendStatus 'progress', progress
+        @upi.setStatus {status: 'progress', progress}
       onDone: (exitCode, hasError) =>
-        @emitBackendStatus 'ready'
+        cancelActionDisp?.dispose?()
+        @upi.setStatus status: 'ready'
         # cabal returns failure when there are type errors _or_ when it can't
         # compile the code at all (i.e., when there are missing dependencies).
         # Since it's hard to distinguish between these days, we look at the
@@ -171,42 +152,69 @@ class IdeBackend
         # with the raw stderr output from cabal.
         if exitCode != 0
           if hasError
-            @emitBackendStatus 'warning'
+            @upi.setStatus status: 'warning'
           else
-            @emitBackendStatus 'error'
+            @upi.setStatus status: 'error'
 
   clean: ->
-    @emitBackendStatus 'progress', 0.0
-    @emitClearMessages ['build']
+    @upi.setStatus status: 'progress'
+    @upi.clearMessages ['build']
     @cabalBuild 'clean',
+      target: @buildTarget.target
       onMsg: (messages) =>
-        @emitMessages messages
+        @upi.addMessages messages
       onDone: (exitCode) =>
-        @emitBackendStatus 'ready'
+        @upi.setStatus status: 'ready'
         if exitCode != 0
-          @emitBackendStatus 'error'
+          @upi.setStatus status: 'error'
 
   test: ->
-    @emitBackendStatus 'progress', 0.0
-    @emitClearMessages ['test']
+    @upi.setStatus status: 'progress'
+    @upi.clearMessages ['test']
+    cancelActionDisp = null
     @cabalBuild 'test',
+      target: @buildTarget.target
+      setCancelAction: (action) =>
+        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
+          classes: ['cancel']
+          events:
+            click: ->
+              action
+          before: '#progressBar'
       onMsg: (messages) =>
-        @emitMessages messages.map (msg) ->
-          msg.severity = 'test' if msg.severity is 'build'
-          msg
+        @upi.addMessages (messages
+          .filter ({severity}) -> severity is 'build'
+          .map (msg) ->
+            msg.severity = 'test'
+            msg)
       onDone: (exitCode) =>
-        @emitBackendStatus 'ready'
+        cancelActionDisp?.dispose?()
+        @upi.setStatus status: 'ready'
         if exitCode != 0
-          @emitBackendStatus 'error'
+          @upi.setStatus status: 'error'
 
-  getTargets: ->
+  showTarget: ->
+    {type, name} = @buildTarget ? {name: "All"}
+    if type
+      @targetElem.innerText = "#{name} (#{type})"
+    else
+      @targetElem.innerText = "#{name}"
+
+  setTarget: ({onComplete}) ->
     [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
-    new Promise (resolve) =>
-      @parseCabalFile (path.join cabalRoot, cabalFile), (cabalParsed) ->
-        resolve cabalParsed
+    unless cabalRoot? and cabalFile?
+      @cabalFileError()
+      return
+    @parseCabalFile (path.join cabalRoot, cabalFile), (targets) =>
+      new TargetListView
+        items: targets.targets
+        onConfirmed: (@buildTarget) =>
+          @showTarget()
+          onComplete? @buildTarget
 
-  getMenu: ->
-    label: 'Cabal'
-    submenu: [
-      {label: 'Test', command: 'ide-haskell-cabal:test'}
+  cabalFileError: ->
+    @upi.addMessages [
+      message: 'No cabal file found'
+      severity: 'error'
     ]
+    @upi.setStatus status: 'error'

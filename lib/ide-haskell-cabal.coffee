@@ -7,20 +7,50 @@ IdeBackend = require './ide-backend'
 module.exports = IdeHaskellCabal =
   subscriptions: null
 
-  activate: (state) ->
-    # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
-    @subscriptions = new CompositeDisposable
-    @subscriptions.add atom.commands.add 'atom-workspace',
-      'ide-haskell-cabal:test': =>
-        @ideBackend?.test?()
+  activate: (@state) ->
+    @disposables = null
 
   deactivate: ->
-    @subscriptions.dispose()
-    @ideBackend = null
+    @disposables?.dispose?()
+    @disposables = null
 
-  provideIdeBackend: ->
-    @ideBackend ?= new IdeBackend
-    @ideBackend
+  serialize: ->
+    target: @target
+
+  consumeUPI: (service) ->
+    upi = service.registerPlugin @disposables = new CompositeDisposable
+    @disposables.add upi.disposables
+
+    backend = new IdeBackend(upi, @state)
+
+    upi.setMessageTypes
+      error: {}
+      warning: {}
+      build:
+        uriFilter: false
+        autoScroll: true
+      test:
+        uriFilter: false
+        autoScroll: true
+
+    @disposables.add atom.commands.add 'atom-workspace',
+      'ide-haskell-cabal:build': ->
+        backend.build()
+      'ide-haskell-cabal:clean': ->
+        backend.clean()
+      'ide-haskell-cabal:test': ->
+        backend.test()
+      'ide-haskell-cabal:set-build-target': =>
+        backend.setTarget onComplete: (@target) =>
+
+    upi.setMenu 'Cabal', [
+        {label: 'Build Project', command: 'ide-haskell-cabal:build'}
+        {label: 'Clean Project', command: 'ide-haskell-cabal:clean'}
+        {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
+        {label: 'Test', command: 'ide-haskell-cabal:test'}
+      ]
+
+    @disposables
 
   # Configuration settings
   #

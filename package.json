@@ -15,12 +15,14 @@
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
-  "dependencies": {},
-  "providedServices": {
-    "haskell-build-backend": {
-      "description": "ide-haskell support for Cabal",
+  "dependencies": {
+    "atom-space-pen-views": "^2.0.3"
+  },
+  "consumedServices": {
+    "ide-haskell-upi": {
+      "description": "Uses ide-haskell's unified pluggable interface",
       "versions": {
-        "0.3.0": "provideIdeBackend"
+        "0.0.1": "consumeUPI"
       }
     }
   }
