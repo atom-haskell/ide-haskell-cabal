@@ -8,13 +8,18 @@ module.exports = IdeHaskellCabal =
   subscriptions: null
 
   activate: (@state) ->
+    @disposables = null
+
+  deactivate: ->
+    @disposables?.dispose?()
+    @disposables = null
 
   serialize: ->
     target: @target
 
-  consumeUPI: (upi) ->
-    disposables = new CompositeDisposable
-    disposables.add upi.disposables
+  consumeUPI: (service) ->
+    upi = service.registerPlugin @disposables = new CompositeDisposable
+    @disposables.add upi.disposables
 
     backend = new IdeBackend(upi, @state)
 
@@ -28,7 +33,7 @@ module.exports = IdeHaskellCabal =
         uriFilter: false
         autoScroll: true
 
-    disposables.add atom.commands.add 'atom-workspace',
+    @disposables.add atom.commands.add 'atom-workspace',
       'ide-haskell-cabal:build': ->
         backend.build()
       'ide-haskell-cabal:clean': ->
@@ -45,7 +50,7 @@ module.exports = IdeHaskellCabal =
         {label: 'Test', command: 'ide-haskell-cabal:test'}
       ]
 
-    disposables
+    @disposables
 
   # Configuration settings
   #
