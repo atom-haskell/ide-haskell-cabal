@@ -19,7 +19,6 @@ module.exports = IdeHaskellCabal =
 
   consumeUPI: (service) ->
     upi = service.registerPlugin @disposables = new CompositeDisposable
-    @disposables.add upi.disposables
 
     backend = new IdeBackend(upi, @state)
 
