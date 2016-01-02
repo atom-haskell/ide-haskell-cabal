@@ -1,9 +1,3 @@
-# Atom dependencies
-{CompositeDisposable} = require 'atom'
-
-# Internal dependencies
-IdeBackend = require './ide-backend'
-
 module.exports = IdeHaskellCabal =
   subscriptions: null
 
@@ -18,6 +12,12 @@ module.exports = IdeHaskellCabal =
     target: @target
 
   consumeUPI: (service) ->
+    # Atom dependencies
+    {CompositeDisposable} = require 'atom'
+
+    # Internal dependencies
+    IdeBackend = require './ide-backend'
+
     upi = service.registerPlugin @disposables = new CompositeDisposable
 
     backend = new IdeBackend(upi, @state)

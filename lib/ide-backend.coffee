@@ -6,9 +6,9 @@ fs   = require 'fs'
 {CompositeDisposable, Emitter} = require 'atom'
 
 # Internal dependencies
-CabalProcess = require './cabal-process'
-HaskellCabal = require '../hs/HaskellCabal.min.js'
-TargetListView = require './views/target-list-view'
+CabalProcess = null
+HaskellCabal = null
+TargetListView = null
 
 module.exports =
 class IdeBackend
@@ -63,6 +63,7 @@ class IdeBackend
           cabalArgs.push '--save-configure'
       cabalArgs.push '--builddir=' + buildDir
       cabalArgs.push target if target? and cmd is 'build'
+      CabalProcess ?= require './cabal-process'
       cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
     else
       @cabalFileError()
@@ -117,6 +118,7 @@ class IdeBackend
 
   # Call into Cabal to parse the .cabal file
   parseCabalFile: (path, callback) ->
+    HaskellCabal ?= require '../hs/HaskellCabal.min.js'
     fs.readFile path, {encoding: 'utf8'}, (err, data) ->
       HaskellCabal.parseDotCabal data, callback
 
@@ -201,6 +203,7 @@ class IdeBackend
       @targetElem.innerText = "#{name}"
 
   setTarget: ({onComplete}) ->
+    TargetListView ?= require './views/target-list-view'
     [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
     unless cabalRoot? and cabalFile?
       @cabalFileError()
