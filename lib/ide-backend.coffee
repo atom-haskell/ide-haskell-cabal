@@ -6,8 +6,8 @@ fs   = require 'fs'
 {CompositeDisposable, Emitter} = require 'atom'
 
 # Internal dependencies
+Util = require 'atom-haskell-utils'
 CabalProcess = null
-HaskellCabal = null
 TargetListView = null
 
 module.exports =
@@ -51,7 +51,12 @@ class IdeBackend
     # exits. Otherwise, problems will ensue.
     target = opts.target
 
-    [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
+    cabalRoot = Util.getRootDir @getActiveProjectPath()
+
+    [cabalFile] =
+      cabalRoot.getEntriesSync().filter (file) ->
+        file.isFile() and file.getBaseName().endsWith '.cabal'
+
     buildDir = @getConfigOpt 'buildDir'
 
     if cabalFile?
@@ -71,7 +76,7 @@ class IdeBackend
   spawnOpts: (cabalRoot) ->
     # Setup default opts
     opts =
-      cwd: cabalRoot
+      cwd: cabalRoot.getPath()
       detached: true
       env: {}
     opts.env[variable] = value for variable, value of process.env
@@ -89,38 +94,6 @@ class IdeBackend
       opts.env.CABAL_SANDBOX_CONFIG = sandboxConfig
 
     return opts
-
-  # Traverse the directory structure from the cwd to the root, looking for the
-  # directory that contains the .cabal file
-  #
-  # Returns an array containing the directory of the cabal file and the name of
-  # the cabal file. The latter will be `null` if not found.
-  findCabalFile: (cwd) =>
-    notRoot = (dir) -> dir != path.join dir, ".."
-
-    while not @containsCabalFile?(cwd) and notRoot(cwd)
-      cwd = path.join cwd, ".."
-
-    [cwd, @containsCabalFile cwd]
-
-  # Check if a directory contains a Cabal file
-  # Returns the path to the cabal file if found or undefined otherwise
-  containsCabalFile: (dir) ->
-    isCabalFile = (file) ->
-      if file.endsWith(".cabal")
-        stat = fs.statSync (path.join dir, file)
-        return stat.isFile()
-      else
-        return false
-
-    contents = fs.readdirSync(dir)
-    return file for file in contents when isCabalFile(file)
-
-  # Call into Cabal to parse the .cabal file
-  parseCabalFile: (path, callback) ->
-    HaskellCabal ?= require '../hs/HaskellCabal.min.js'
-    fs.readFile path, {encoding: 'utf8'}, (err, data) ->
-      HaskellCabal.parseDotCabal data, callback
 
   ### Public interface below ###
 
@@ -204,11 +177,21 @@ class IdeBackend
 
   setTarget: ({onComplete}) ->
     TargetListView ?= require './views/target-list-view'
-    [cabalRoot, cabalFile] = @findCabalFile @getActiveProjectPath()
-    unless cabalRoot? and cabalFile?
+    cabalRoot = Util.getRootDir @getActiveProjectPath()
+
+    [cabalFile] =
+      cabalRoot.getEntriesSync().filter (file) ->
+        file.isFile() and file.getBaseName().endsWith '.cabal'
+
+    unless cabalFile?
       @cabalFileError()
       return
-    @parseCabalFile (path.join cabalRoot, cabalFile), (targets) =>
+
+    cabalFile.read()
+    .then (data) ->
+      new Promise (resolve) ->
+        Util.parseDotCabal data, resolve
+    .then (targets) =>
       new TargetListView
         items: targets.targets
         onConfirmed: (@buildTarget) =>
