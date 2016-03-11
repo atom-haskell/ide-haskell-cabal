@@ -94,7 +94,9 @@ class CabalProcess
 
         uri: @cwd.getFile(file).getPath()
         position: new Point parseInt(line) - 1, parseInt(col) - 1
-        message: @unindentMessage(msg.trimRight())
+        message:
+          text: @unindentMessage(msg.trimRight())
+          highlighter: 'hint.message.haskell'
         severity: typ
       else
         message: raw
