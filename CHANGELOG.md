@@ -1,3 +1,9 @@
+## 1.1.0
+* Add message highlighting
+* Use atom-haskell-utils
+* Defer `require`s until needed
+* Remove unneeded line
+
 ## 1.0.0
 * Migration to ide-haskell UPI interface
 
