@@ -9,6 +9,7 @@ fs   = require 'fs'
 Util = require 'atom-haskell-utils'
 CabalProcess = null
 TargetListView = null
+ProjectListView = null
 
 module.exports =
 class IdeBackend
@@ -17,7 +18,15 @@ class IdeBackend
     @disposables = new CompositeDisposable
 
     @buildTarget = state?.target ? {name: 'All'}
+    @buildProject = state?.project ? {name: 'Auto'}
 
+    @disposables.add @upi.addPanelControl @projectElem = (document.createElement 'ide-haskell-project'),
+      events:
+        click: ->
+          atom.commands.dispatch atom.views.getView(atom.workspace),
+            'ide-haskell-cabal:set-active-project'
+      before: '#progressBar'
+    @showProject()
     @disposables.add @upi.addPanelControl @targetElem = (document.createElement 'ide-haskell-target'),
       events:
         click: ->
@@ -37,9 +46,8 @@ class IdeBackend
     return value.trim()
 
   getActiveProjectPath: ->
-    # TODO: This is far from optimal, and it would be better to allow specifying
-    # active project here, but I don't have too much time on my hands right now
-    # - Nick
+    if @buildProject.dir?
+      return @buildProject.dir
     editor = atom.workspace.getActiveTextEditor()
     if editor?.getPath?()?
       path.dirname editor.getPath()
@@ -174,6 +182,23 @@ class IdeBackend
       @targetElem.innerText = "#{name} (#{type})"
     else
       @targetElem.innerText = "#{name}"
+
+  showProject: ->
+    {name} = @buildProject ? {name: "Auto"}
+    @projectElem.innerText = "#{name}"
+
+  setProject: ({onComplete}) ->
+    ProjectListView ?= require './views/project-list-view'
+
+    projects = atom.project.getDirectories().map (d) ->
+      name: d.getBaseName()
+      dir: d.getPath()
+
+    new ProjectListView
+      items: projects
+      onConfirmed: (@buildProject) =>
+        @showProject()
+        onComplete? @buildProject
 
   setTarget: ({onComplete}) ->
     TargetListView ?= require './views/target-list-view'

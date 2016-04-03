@@ -9,7 +9,8 @@ module.exports = IdeHaskellCabal =
     @disposables = null
 
   serialize: ->
-    target: @target
+    target: @target ? @state.target
+    project: @project ? @state.project
 
   consumeUPI: (service) ->
     # Atom dependencies
@@ -41,11 +42,14 @@ module.exports = IdeHaskellCabal =
         backend.test()
       'ide-haskell-cabal:set-build-target': =>
         backend.setTarget onComplete: (@target) =>
+      'ide-haskell-cabal:set-active-project': =>
+        backend.setProject onComplete: (@project) =>
 
     upi.setMenu 'Cabal', [
         {label: 'Build Project', command: 'ide-haskell-cabal:build'}
         {label: 'Clean Project', command: 'ide-haskell-cabal:clean'}
         {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
+        {label: 'Set Active Project', command: 'ide-haskell-cabal:set-active-project'}
         {label: 'Test', command: 'ide-haskell-cabal:test'}
       ]
 
