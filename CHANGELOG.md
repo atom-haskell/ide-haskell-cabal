@@ -1,3 +1,7 @@
+## 1.2.0
+* Add project select
+* Add styles
+
 ## 1.1.0
 * Add message highlighting
 * Use atom-haskell-utils
