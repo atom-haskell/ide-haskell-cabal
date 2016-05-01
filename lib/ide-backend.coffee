@@ -124,7 +124,6 @@ class IdeBackend
 
     opts.env = env
 
-    console.error opts.env.PATH
     return opts
 
   ### Public interface below ###
