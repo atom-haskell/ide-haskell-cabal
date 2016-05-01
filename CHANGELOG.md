@@ -1,3 +1,6 @@
+## 1.2.1
+* Better path handling on Windows
+
 ## 1.2.0
 * Add project select
 * Add styles
