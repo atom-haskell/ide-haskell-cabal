@@ -1,3 +1,6 @@
+## 1.2.2
+* Remove debug output
+
 ## 1.2.1
 * Better path handling on Windows
 
