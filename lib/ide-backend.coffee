@@ -87,20 +87,44 @@ class IdeBackend
       cwd: cabalRoot.getPath()
       detached: true
       env: {}
-    opts.env[variable] = value for variable, value of process.env
+
+    {delimiter} = require 'path'
+
+    env = {}
+    for k, v of process.env
+      env[k] = v
+
+    if process.platform is 'win32'
+      PATH = []
+      capMask = (str, mask) ->
+        a = str.split ''
+        for c, i in a
+          if mask & Math.pow(2, i)
+            a[i] = a[i].toUpperCase()
+        return a.join ''
+      for m in [0b1111..0]
+        vn = capMask("path", m)
+        if env[vn]?
+          PATH.push env[vn]
+      env.PATH = PATH.join delimiter
+
+    env.PATH ?= ""
 
     # set PATH depending on config settings
     ghcPath = @getConfigOpt 'pathTo'
     if atom.config.get 'cabal.pathExclusive'
-      opts.env.PATH = ghcPath
-    else
-      opts.env.PATH = ghcPath + ":" + process.env.PATH
+      env.PATH = ghcPath
+    else if ghcPath
+      env.PATH = ghcPath.split(delimiter).concat(env.PATH.split(delimiter)).join(delimiter)
 
     # Set sandbox file (if specified)
     sandboxConfig = @getConfigOpt 'sandbox'
     if sandboxConfig != ''
-      opts.env.CABAL_SANDBOX_CONFIG = sandboxConfig
+      env.CABAL_SANDBOX_CONFIG = sandboxConfig
 
+    opts.env = env
+
+    console.error opts.env.PATH
     return opts
 
   ### Public interface below ###
