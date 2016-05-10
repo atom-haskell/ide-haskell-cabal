@@ -1,3 +1,28 @@
+ghcVerProps =
+  pathExclusive:
+    title: 'Replace PATH (rather than append to it)'
+    type: 'boolean'
+    default: false
+    order: 10
+
+  pathTo:
+    type: 'array'
+    title: 'PATH; comma-separated'
+    default: []
+    order: 20
+
+  sandbox:
+    type: 'string'
+    title: 'Sandbox configuration file'
+    default: ''
+    order: 30
+
+  buildDir:
+    type: 'string'
+    title: 'Build directory'
+    default: 'dist'
+    order: 40
+
 module.exports = IdeHaskellCabal =
   subscriptions: null
 
@@ -63,94 +88,49 @@ module.exports = IdeHaskellCabal =
   # Note: naming the variables so that alphabetical listing in the
   # config panel gives a sensible result.
   config:
-    activeGhcVersion:
-      type: 'string'
-      title: 'Active GHC version'
-      default: '7.8'
-      enum: ['7.2', '7.4', '7.6', '7.8', '7.10']
-
-    pathExclusive:
-      title: 'Replace PATH (rather than append to it)'
-      type: 'boolean'
-      default: false
-
-    # Path to GHC
-
-    pathTo702:
-      type: 'string'
-      title: 'Path for GHC 7.2'
-      default: ''
-
-    pathTo704:
-      type: 'string'
-      title: 'Path for GHC 7.4'
-      default: ''
-
-    pathTo706:
-      type: 'string'
-      title: 'Path for GHC 7.6'
-      default: ''
-
-    pathTo708:
-      type: 'string'
-      title: 'Path for GHC 7.8'
-      default: ''
-
-    pathTo710:
-      type: 'string'
-      title: 'Path for GHC 7.10'
-      default: ''
-
-    # Sandbox config file
-
-    sandbox702:
-      type: 'string'
-      title: 'Sandbox configuration file for GHC 7.2'
-      default: ''
-
-    sandbox704:
-      type: 'string'
-      title: 'Sandbox configuration file for GHC 7.4'
-      default: ''
-
-    sandbox706:
-      type: 'string'
-      title: 'Sandbox configuration file for GHC 7.6'
-      default: ''
-
-    sandbox708:
-      type: 'string'
-      title: 'Sandbox configuration file for GHC 7.8'
-      default: ''
-
-    sandbox710:
-      type: 'string'
-      title: 'Sandbox configuration file for GHC 7.10'
-      default: ''
-
-    # Build directory
-
-    buildDir702:
-      type: 'string'
-      title: 'Build directory for GHC 7.2'
-      default: 'dist'
-
-    buildDir704:
-      type: 'string'
-      title: 'Build directory for GHC 7.4'
-      default: 'dist'
-
-    buildDir706:
-      type: 'string'
-      title: 'Build directory for GHC 7.6'
-      default: 'dist'
-
-    buildDir708:
-      type: 'string'
-      title: 'Build directory for GHC 7.8'
-      default: 'dist'
-
-    buildDir710:
-      type: 'string'
-      title: 'Build directory for GHC 7.10'
-      default: 'dist'
+    stack:
+      type: 'object'
+      properties:
+        globalArguments:
+          type: 'array'
+          description: 'Global stack arguments (comma-separated)'
+          default: []
+          order: 10
+        buildArguments:
+          type: 'array'
+          description: 'Stack build command arguments (comma-separated)'
+          default: []
+          order: 20
+        testArguments:
+          type: 'array'
+          description: 'Stack test command arguments (comma-separated)'
+          default: []
+          order: 30
+    cabal:
+      type: 'object'
+      properties:
+        activeGhcVersion:
+          type: 'string'
+          title: 'Active GHC version'
+          default: '7.8'
+          enum: ['7.2', '7.4', '7.6', '7.8', '7.10']
+        'ghc702':
+          type: 'object'
+          title: 'GHC 7.2'
+          properties: ghcVerProps
+        'ghc704':
+          type: 'object'
+          title: 'GHC 7.4'
+          properties: ghcVerProps
+        'ghc706':
+          type: 'object'
+          title: 'GHC 7.6'
+          properties: ghcVerProps
+        'ghc708':
+          type: 'object'
+          title: 'GHC 7.8'
+          properties: ghcVerProps
+        'ghc710':
+          type: 'object'
+          title: 'GHC 7.10'
+          properties: ghcVerProps

@@ -46,12 +46,12 @@ class IdeBackend
 
   # Get configuration option for active GHC
   getConfigOpt: (opt) ->
-    value = switch atom.config.get 'ide-haskell-cabal.activeGhcVersion'
-      when '7.2'  then atom.config.get 'ide-haskell-cabal.' + opt + '702'
-      when '7.4'  then atom.config.get 'ide-haskell-cabal.' + opt + '704'
-      when '7.6'  then atom.config.get 'ide-haskell-cabal.' + opt + '706'
-      when '7.8'  then atom.config.get 'ide-haskell-cabal.' + opt + '708'
-      when '7.10' then atom.config.get 'ide-haskell-cabal.' + opt + '710'
+    value = switch atom.config.get 'ide-haskell-cabal.cabal.activeGhcVersion'
+      when '7.2'  then atom.config.get "ide-haskell-cabal.cabal.ghc702.#{opt}"
+      when '7.4'  then atom.config.get "ide-haskell-cabal.cabal.ghc704.#{opt}"
+      when '7.6'  then atom.config.get "ide-haskell-cabal.cabal.ghc706.#{opt}"
+      when '7.8'  then atom.config.get "ide-haskell-cabal.cabal.ghc708.#{opt}"
+      when '7.10' then atom.config.get "ide-haskell-cabal.cabal.ghc710.#{opt}"
     return value.trim()
 
   getActiveProjectPath: ->
@@ -88,7 +88,7 @@ class IdeBackend
         CabalProcess ?= require './cabal-process'
         cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
       else if @buildBuilder is 'stack'
-        cabalArgs = atom.config.get('ide-haskell-stack.stack.globalArguments') ? []
+        cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
         cabalArgs.push cmd
         target = opts.target
         comp = target.target
@@ -97,7 +97,7 @@ class IdeBackend
             comp = 'lib'
           comp = "#{target.project}:#{comp}"
           cabalArgs.push comp
-        cabalArgs.push (atom.config.get("ide-haskell-stack.stack.#{cmd}Arguments") ? [])...
+        cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
         CabalProcess ?= require './cabal-process'
         cabalProcess = new CabalProcess 'stack', cabalArgs, @spawnOpts(cabalRoot), opts
       else
@@ -136,7 +136,7 @@ class IdeBackend
 
     # set PATH depending on config settings
     ghcPath = @getConfigOpt 'pathTo'
-    if atom.config.get 'cabal.pathExclusive'
+    if getConfigOpt 'pathExclusive'
       env.PATH = ghcPath
     else if ghcPath
       env.PATH = ghcPath.split(delimiter).concat(env.PATH.split(delimiter)).join(delimiter)
