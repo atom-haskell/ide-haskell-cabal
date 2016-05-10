@@ -1,3 +1,6 @@
+## 1.3.0
+* Merge in ide-haskell-stack
+
 ## 1.2.2
 * Remove debug output
 
