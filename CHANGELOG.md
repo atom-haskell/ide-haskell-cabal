@@ -1,3 +1,6 @@
+## 1.3.1
+* Cleanup config; Add stack config
+
 ## 1.3.0
 * Merge in ide-haskell-stack
 
