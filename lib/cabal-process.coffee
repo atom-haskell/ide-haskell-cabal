@@ -1,6 +1,7 @@
 # Node module dependencies
 child_process = require 'child_process'
 process       = require 'process'
+path          = require 'path'
 
 # Atom dependencies
 {Directory, Point} = require 'atom'
@@ -92,7 +93,11 @@ class CabalProcess
         [file, line, col, rawTyp, msg] = matched.slice(1, 6)
         typ = if rawTyp? then "warning" else "error"
 
-        uri: @cwd.getFile(file).getPath()
+        uri:
+          if path.isAbsolute(file)
+            file
+          else
+            @cwd.getFile(file).getPath()
         position: new Point parseInt(line) - 1, parseInt(col) - 1
         message:
           text: @unindentMessage(msg.trimRight())

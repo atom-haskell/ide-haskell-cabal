@@ -10,6 +10,7 @@ Util = require 'atom-haskell-utils'
 CabalProcess = null
 TargetListView = null
 ProjectListView = null
+BuilderListView = null
 
 module.exports =
 class IdeBackend
@@ -19,7 +20,15 @@ class IdeBackend
 
     @buildTarget = state?.target ? {name: 'All'}
     @buildProject = state?.project ? {name: 'Auto'}
+    @buildBuilder = state?.builder ? {name: 'cabal'}
 
+    @disposables.add @upi.addPanelControl @builderElem = (document.createElement 'ide-haskell-builder'),
+      events:
+        click: ->
+          atom.commands.dispatch atom.views.getView(atom.workspace),
+            'ide-haskell-cabal:set-active-builder'
+      before: '#progressBar'
+    @showBuilder()
     @disposables.add @upi.addPanelControl @projectElem = (document.createElement 'ide-haskell-project'),
       events:
         click: ->
@@ -57,7 +66,6 @@ class IdeBackend
   cabalBuild: (cmd, opts) =>
     # TODO: It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
-    target = opts.target
 
     cabalRoot = Util.getRootDir @getActiveProjectPath()
 
@@ -65,19 +73,35 @@ class IdeBackend
       cabalRoot.getEntriesSync().filter (file) ->
         file.isFile() and file.getBaseName().endsWith '.cabal'
 
-    buildDir = @getConfigOpt 'buildDir'
-
     if cabalFile?
-      cabalArgs = [cmd]
-      switch cmd
-        when 'build', 'test'
-          cabalArgs.push '--only'
-        when 'clean'
-          cabalArgs.push '--save-configure'
-      cabalArgs.push '--builddir=' + buildDir
-      cabalArgs.push target if target? and cmd is 'build'
-      CabalProcess ?= require './cabal-process'
-      cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
+      if @buildBuilder is 'cabal'
+        buildDir = @getConfigOpt 'buildDir'
+        target = opts.target.target
+        cabalArgs = [cmd]
+        switch cmd
+          when 'build', 'test'
+            cabalArgs.push '--only'
+          when 'clean'
+            cabalArgs.push '--save-configure'
+        cabalArgs.push '--builddir=' + buildDir
+        cabalArgs.push target if target? and cmd is 'build'
+        CabalProcess ?= require './cabal-process'
+        cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
+      else if @buildBuilder is 'stack'
+        cabalArgs = atom.config.get('ide-haskell-stack.stack.globalArguments') ? []
+        cabalArgs.push cmd
+        target = opts.target
+        comp = target.target
+        if comp?
+          if comp.startsWith 'lib:'
+            comp = 'lib'
+          comp = "#{target.project}:#{comp}"
+          cabalArgs.push comp
+        cabalArgs.push (atom.config.get("ide-haskell-stack.stack.#{cmd}Arguments") ? [])...
+        CabalProcess ?= require './cabal-process'
+        cabalProcess = new CabalProcess 'stack', cabalArgs, @spawnOpts(cabalRoot), opts
+      else
+        throw new Error("Unkown builder '#{@buildBuilder}'")
     else
       @cabalFileError()
 
@@ -134,7 +158,7 @@ class IdeBackend
 
     cancelActionDisp = null
     @cabalBuild 'build',
-      target: @buildTarget.target
+      target: @buildTarget
       setCancelAction: (action) =>
         cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
           classes: ['cancel']
@@ -166,7 +190,7 @@ class IdeBackend
     @upi.setStatus status: 'progress'
     @upi.clearMessages ['build']
     @cabalBuild 'clean',
-      target: @buildTarget.target
+      target: @buildTarget
       onMsg: (messages) =>
         @upi.addMessages messages
       onDone: (exitCode) =>
@@ -179,7 +203,7 @@ class IdeBackend
     @upi.clearMessages ['test']
     cancelActionDisp = null
     @cabalBuild 'test',
-      target: @buildTarget.target
+      target: @buildTarget
       setCancelAction: (action) =>
         cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
           classes: ['cancel']
@@ -210,6 +234,10 @@ class IdeBackend
     {name} = @buildProject ? {name: "Auto"}
     @projectElem.innerText = "#{name}"
 
+  showBuilder: ->
+    name = @buildBuilder ? "cabal"
+    @builderElem.innerText = "#{name}"
+
   setProject: ({onComplete}) ->
     ProjectListView ?= require './views/project-list-view'
 
@@ -222,6 +250,17 @@ class IdeBackend
       onConfirmed: (@buildProject) =>
         @showProject()
         onComplete? @buildProject
+
+  setBuilder: ({onComplete}) ->
+    BuilderListView ?= require './views/builder-list-view'
+
+    builders = [{name: 'cabal'}, {name: 'stack'}]
+
+    new BuilderListView
+      items: builders
+      onConfirmed: (@buildBuilder) =>
+        @showBuilder()
+        onComplete? @buildBuilder
 
   setTarget: ({onComplete}) ->
     TargetListView ?= require './views/target-list-view'
@@ -241,7 +280,10 @@ class IdeBackend
         Util.parseDotCabal data, resolve
     .then (targets) =>
       new TargetListView
-        items: targets.targets
+        items:
+          targets.targets.map (t) ->
+            t.project = targets.name
+            return t
         onConfirmed: (@buildTarget) =>
           @showTarget()
           onComplete? @buildTarget
