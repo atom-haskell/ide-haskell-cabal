@@ -20,7 +20,7 @@ class IdeBackend
 
     @buildTarget = state?.target ? {name: 'All'}
     @buildProject = state?.project ? {name: 'Auto'}
-    @buildBuilder = state?.builder ? {name: 'cabal'}
+    @buildBuilder = state?.builder ? 'cabal'
 
     @disposables.add @upi.addPanelControl @builderElem = (document.createElement 'ide-haskell-builder'),
       events:
