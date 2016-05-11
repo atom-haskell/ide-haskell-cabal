@@ -1,3 +1,6 @@
+## 1.3.2
+* Fix non-specified builder
+
 ## 1.3.1
 * Cleanup config; Add stack config
 
