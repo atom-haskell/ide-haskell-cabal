@@ -1,3 +1,7 @@
+## 1.3.3
+* Fix path
+* Fix value.trim() error
+
 ## 1.3.2
 * Fix non-specified builder
 
