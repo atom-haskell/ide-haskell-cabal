@@ -52,7 +52,7 @@ class IdeBackend
       when '7.6'  then atom.config.get "ide-haskell-cabal.cabal.ghc706.#{opt}"
       when '7.8'  then atom.config.get "ide-haskell-cabal.cabal.ghc708.#{opt}"
       when '7.10' then atom.config.get "ide-haskell-cabal.cabal.ghc710.#{opt}"
-    return value.trim()
+    return value
 
   getActiveProjectPath: ->
     if @buildProject.dir?
