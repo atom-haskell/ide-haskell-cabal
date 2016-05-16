@@ -136,10 +136,10 @@ class IdeBackend
 
     # set PATH depending on config settings
     ghcPath = @getConfigOpt 'pathTo'
-    if getConfigOpt 'pathExclusive'
-      env.PATH = ghcPath
+    if @getConfigOpt 'pathExclusive'
+      env.PATH = ghcPath.join(delimiter)
     else if ghcPath
-      env.PATH = ghcPath.split(delimiter).concat(env.PATH.split(delimiter)).join(delimiter)
+      env.PATH = ghcPath.concat(env.PATH.split(delimiter)).join(delimiter)
 
     # Set sandbox file (if specified)
     sandboxConfig = @getConfigOpt 'sandbox'
