@@ -1,3 +1,7 @@
+## 1.3.4
+* AHS bump
+* Atom-haskell-utils bump
+
 ## 1.3.3
 * Fix path
 * Fix value.trim() error
