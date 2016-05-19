@@ -87,6 +87,19 @@ class IdeBackend
         cabalArgs.push target if target? and cmd is 'build'
         CabalProcess ?= require './cabal-process'
         cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
+      else if @buildBuilder is 'cabal-nix'
+        # TODOs:
+        #   * Commands other than 'build'
+        #   * Support for buildDir
+        if cmd is 'build'
+          cabalArgs = ['new-build']
+        else
+          throw new Error("Unsupported command '#{cmd}'")
+
+        target = opts.target.target
+        cabalArgs.push target if target? and cmd is 'build'
+        CabalProcess ?= require './cabal-process'
+        cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
       else if @buildBuilder is 'stack'
         cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
         cabalArgs.push cmd
@@ -254,7 +267,7 @@ class IdeBackend
   setBuilder: ({onComplete}) ->
     BuilderListView ?= require './views/builder-list-view'
 
-    builders = [{name: 'cabal'}, {name: 'stack'}]
+    builders = [{name: 'cabal'}, {name: 'stack'}, {name: 'cabal-nix'}]
 
     new BuilderListView
       items: builders
