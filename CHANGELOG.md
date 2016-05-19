@@ -1,3 +1,8 @@
+## 1.4.0
+* Option for enabling cabal-nix
+* Merge remote-tracking branch 'origin/pr/add-cabal-nix-builder'
+* Rudimentary first support for `cabal new-build`
+
 ## 1.3.4
 * AHS bump
 * Atom-haskell-utils bump
