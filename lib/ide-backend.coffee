@@ -74,47 +74,49 @@ class IdeBackend
         file.isFile() and file.getBaseName().endsWith '.cabal'
 
     if cabalFile?
-      if @buildBuilder is 'cabal'
-        buildDir = @getConfigOpt 'buildDir'
-        target = opts.target.target
-        cabalArgs = [cmd]
-        switch cmd
-          when 'build', 'test'
-            cabalArgs.push '--only'
-          when 'clean'
-            cabalArgs.push '--save-configure'
-        cabalArgs.push '--builddir=' + buildDir
-        cabalArgs.push target if target? and cmd is 'build'
-        CabalProcess ?= require './cabal-process'
-        cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
-      else if @buildBuilder is 'cabal-nix'
-        # TODOs:
-        #   * Commands other than 'build'
-        #   * Support for buildDir
-        if cmd is 'build'
-          cabalArgs = ['new-build']
-        else
-          throw new Error("Unsupported command '#{cmd}'")
+      switch @buildBuilder
+        when 'cabal'
+          buildDir = @getConfigOpt 'buildDir'
+          target = opts.target.target
+          cabalArgs = [cmd]
+          switch cmd
+            when 'build', 'test'
+              cabalArgs.push '--only'
+            when 'clean'
+              cabalArgs.push '--save-configure'
+          cabalArgs.push '--builddir=' + buildDir
+          cabalArgs.push target if target? and cmd is 'build'
+          CabalProcess ?= require './cabal-process'
+          cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
+        when 'cabal-nix'
+          # TODOs:
+          #   * Commands other than 'build'
+          #   * Support for buildDir
+          if cmd is 'build'
+            cabalArgs = ['new-build']
+          else
+            atom.notifications.addWarning "Command '#{cmd}' is not implemented for cabal-nix"
+            return opts.onDone()
 
-        target = opts.target.target
-        cabalArgs.push target if target? and cmd is 'build'
-        CabalProcess ?= require './cabal-process'
-        cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
-      else if @buildBuilder is 'stack'
-        cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
-        cabalArgs.push cmd
-        target = opts.target
-        comp = target.target
-        if comp?
-          if comp.startsWith 'lib:'
-            comp = 'lib'
-          comp = "#{target.project}:#{comp}"
-          cabalArgs.push comp
-        cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
-        CabalProcess ?= require './cabal-process'
-        cabalProcess = new CabalProcess 'stack', cabalArgs, @spawnOpts(cabalRoot), opts
-      else
-        throw new Error("Unkown builder '#{@buildBuilder}'")
+          target = opts.target.target
+          cabalArgs.push target if target? and cmd is 'build'
+          CabalProcess ?= require './cabal-process'
+          cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
+        when 'stack'
+          cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
+          cabalArgs.push cmd
+          target = opts.target
+          comp = target.target
+          if comp?
+            if comp.startsWith 'lib:'
+              comp = 'lib'
+            comp = "#{target.project}:#{comp}"
+            cabalArgs.push comp
+          cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
+          CabalProcess ?= require './cabal-process'
+          cabalProcess = new CabalProcess 'stack', cabalArgs, @spawnOpts(cabalRoot), opts
+        else
+          throw new Error("Unkown builder '#{@buildBuilder}'")
     else
       @cabalFileError()
 
@@ -267,7 +269,9 @@ class IdeBackend
   setBuilder: ({onComplete}) ->
     BuilderListView ?= require './views/builder-list-view'
 
-    builders = [{name: 'cabal'}, {name: 'stack'}, {name: 'cabal-nix'}]
+    builders = [{name: 'cabal'}, {name: 'stack'}]
+    if atom.config.get('ide-haskell-cabal.enableNixBuild')
+      builders.push {name: 'cabal-nix'}
 
     new BuilderListView
       items: builders

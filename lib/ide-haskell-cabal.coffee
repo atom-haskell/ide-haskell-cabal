@@ -88,6 +88,13 @@ module.exports = IdeHaskellCabal =
   # Note: naming the variables so that alphabetical listing in the
   # config panel gives a sensible result.
   config:
+    enableNixBuild:
+      description: 'Enable technical preview for cabal new-build introduced
+                    with cabal-1.24. WARNING: this will break ghc-mod! Do not
+                    enable unless you know what you are doing!'
+      type: 'boolean'
+      default: false
+      order: 0
     stack:
       type: 'object'
       properties:
