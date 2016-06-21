@@ -12,6 +12,9 @@
   ],
   "repository": "https://github.com/atom-haskell/ide-haskell-cabal",
   "license": "MIT",
+  "activationHooks": [
+    "language-haskell:grammar-used"
+  ],
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
