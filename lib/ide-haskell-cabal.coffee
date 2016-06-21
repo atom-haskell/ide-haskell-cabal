@@ -119,8 +119,8 @@ module.exports = IdeHaskellCabal =
         activeGhcVersion:
           type: 'string'
           title: 'Active GHC version'
-          default: '7.8'
-          enum: ['7.2', '7.4', '7.6', '7.8', '7.10']
+          default: '7.10'
+          enum: ['7.2', '7.4', '7.6', '7.8', '7.10', '8.0']
         'ghc702':
           type: 'object'
           title: 'GHC 7.2'
@@ -140,4 +140,8 @@ module.exports = IdeHaskellCabal =
         'ghc710':
           type: 'object'
           title: 'GHC 7.10'
+          properties: ghcVerProps
+        'ghc800':
+          type: 'object'
+          title: 'GHC 8.0'
           properties: ghcVerProps
