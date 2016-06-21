@@ -1,28 +1,3 @@
-ghcVerProps =
-  pathExclusive:
-    title: 'Replace PATH (rather than append to it)'
-    type: 'boolean'
-    default: false
-    order: 10
-
-  pathTo:
-    type: 'array'
-    title: 'PATH; comma-separated'
-    default: []
-    order: 20
-
-  sandbox:
-    type: 'string'
-    title: 'Sandbox configuration file'
-    default: ''
-    order: 30
-
-  buildDir:
-    type: 'string'
-    title: 'Build directory'
-    default: 'dist'
-    order: 40
-
 module.exports = IdeHaskellCabal =
   subscriptions: null
 
@@ -113,35 +88,3 @@ module.exports = IdeHaskellCabal =
           description: 'Stack test command arguments (comma-separated)'
           default: []
           order: 30
-    cabal:
-      type: 'object'
-      properties:
-        activeGhcVersion:
-          type: 'string'
-          title: 'Active GHC version'
-          default: '7.10'
-          enum: ['7.2', '7.4', '7.6', '7.8', '7.10', '8.0']
-        'ghc702':
-          type: 'object'
-          title: 'GHC 7.2'
-          properties: ghcVerProps
-        'ghc704':
-          type: 'object'
-          title: 'GHC 7.4'
-          properties: ghcVerProps
-        'ghc706':
-          type: 'object'
-          title: 'GHC 7.6'
-          properties: ghcVerProps
-        'ghc708':
-          type: 'object'
-          title: 'GHC 7.8'
-          properties: ghcVerProps
-        'ghc710':
-          type: 'object'
-          title: 'GHC 7.10'
-          properties: ghcVerProps
-        'ghc800':
-          type: 'object'
-          title: 'GHC 8.0'
-          properties: ghcVerProps
