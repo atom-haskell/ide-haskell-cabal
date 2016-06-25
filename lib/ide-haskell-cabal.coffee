@@ -20,41 +20,41 @@ module.exports = IdeHaskellCabal =
     # Internal dependencies
     IdeBackend = require './ide-backend'
 
-    service.registerPlugin(@disposables = new CompositeDisposable)
-    .then (upi) =>
-      backend = new IdeBackend(upi, @state)
+    upi = service.registerPlugin @disposables = new CompositeDisposable
 
-      upi.setMessageTypes
-        error: {}
-        warning: {}
-        build:
-          uriFilter: false
-          autoScroll: true
-        test:
-          uriFilter: false
-          autoScroll: true
+    backend = new IdeBackend(upi, @state)
 
-      @disposables.add atom.commands.add 'atom-workspace',
-        'ide-haskell-cabal:build': ->
-          backend.build()
-        'ide-haskell-cabal:clean': ->
-          backend.clean()
-        'ide-haskell-cabal:test': ->
-          backend.test()
-        'ide-haskell-cabal:set-build-target': =>
-          backend.setTarget onComplete: (@target) =>
-        'ide-haskell-cabal:set-active-project': =>
-          backend.setProject onComplete: (@project) =>
-        'ide-haskell-cabal:set-active-builder': =>
-          backend.setBuilder onComplete: (@builder) =>
+    upi.setMessageTypes
+      error: {}
+      warning: {}
+      build:
+        uriFilter: false
+        autoScroll: true
+      test:
+        uriFilter: false
+        autoScroll: true
 
-      upi.setMenu 'Builder', [
-          {label: 'Build Project', command: 'ide-haskell-cabal:build'}
-          {label: 'Clean Project', command: 'ide-haskell-cabal:clean'}
-          {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
-          {label: 'Set Active Project', command: 'ide-haskell-cabal:set-active-project'}
-          {label: 'Test', command: 'ide-haskell-cabal:test'}
-        ]
+    @disposables.add atom.commands.add 'atom-workspace',
+      'ide-haskell-cabal:build': ->
+        backend.build()
+      'ide-haskell-cabal:clean': ->
+        backend.clean()
+      'ide-haskell-cabal:test': ->
+        backend.test()
+      'ide-haskell-cabal:set-build-target': =>
+        backend.setTarget onComplete: (@target) =>
+      'ide-haskell-cabal:set-active-project': =>
+        backend.setProject onComplete: (@project) =>
+      'ide-haskell-cabal:set-active-builder': =>
+        backend.setBuilder onComplete: (@builder) =>
+
+    upi.setMenu 'Builder', [
+        {label: 'Build Project', command: 'ide-haskell-cabal:build'}
+        {label: 'Clean Project', command: 'ide-haskell-cabal:clean'}
+        {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
+        {label: 'Set Active Project', command: 'ide-haskell-cabal:set-active-project'}
+        {label: 'Test', command: 'ide-haskell-cabal:test'}
+      ]
 
     @disposables
 
