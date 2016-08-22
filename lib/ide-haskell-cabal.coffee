@@ -66,6 +66,8 @@ module.exports = IdeHaskellCabal =
         backend.clean()
       'ide-haskell-cabal:test': ->
         backend.test()
+      'ide-haskell-cabal:build-dependencies': ->
+        backend.dependencies()
       'ide-haskell-cabal:set-build-target': =>
         backend.setTarget onComplete: (@target) =>
       'ide-haskell-cabal:set-active-project': =>
@@ -79,6 +81,7 @@ module.exports = IdeHaskellCabal =
         {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
         {label: 'Set Active Project', command: 'ide-haskell-cabal:set-active-project'}
         {label: 'Test', command: 'ide-haskell-cabal:test'}
+        {label: 'Build Dependencies', command: 'ide-haskell-cabal:build-dependencies'}
       ]
 
     @disposables
@@ -116,6 +119,12 @@ module.exports = IdeHaskellCabal =
     cabal:
       type: 'object'
       properties:
+        ignoreNoSandbox:
+          type: 'boolean'
+          title: 'Install dependencies with no sandbox'
+          description: 'Installing dependencies with no project sandbox is not
+                        recommended, but you can do it if you enable this option'
+          default: false
         activeGhcVersion:
           type: 'string'
           title: 'Active GHC version'

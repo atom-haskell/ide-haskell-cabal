@@ -1,6 +1,6 @@
 # Node module dependencies
 child_process = require 'child_process'
-process       = require 'process'
+{kill}        = require 'process'
 path          = require 'path'
 
 # Atom dependencies
@@ -21,9 +21,9 @@ class CabalProcess
     proc = child_process.spawn command, args, options
 
     setCancelAction? ->
-      # Kill the entire process group
-      # (E.g., if cabal spawns ghc, kill both)
-      process.kill -proc.pid, 'SIGTERM'
+      try kill -proc.pid
+      try kill proc.pid
+      try proc.kill()
 
     proc.stdout.on 'data', (data) ->
       match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/

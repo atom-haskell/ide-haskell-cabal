@@ -85,6 +85,30 @@ class IdeBackend
               cabalArgs.push '--only'
             when 'clean'
               cabalArgs.push '--save-configure'
+            when 'deps'
+              igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
+              se = cabalRoot.getFile('cabal.sandbox.config').existsSync()
+              unless se or igns
+                notification = atom.notifications.addWarning 'No sandbox found, stopping',
+                  dismissable: true
+                  detail: 'ide-haskell-cabal did not find sandbox configuration
+                         \nfile. Installing dependencies without sandbox is
+                         \ndangerous and is not recommended. It is suggested to
+                         \ncreate a sandbox right now.'
+                try
+                  notificationView = atom.views.getView(notification)
+                  notificationContent = notificationView.querySelector('.detail-content')
+                  install = document.createElement('button')
+                  install.style['margin-top'] = '1em'
+                  install.innerText = 'Click here to create sandbox'
+                  install.classList.add 'btn', 'btn-warning', 'icon', 'icon-rocket'
+                  install.addEventListener 'click', =>
+                    CabalProcess ?= require './cabal-process'
+                    new CabalProcess 'cabal', ['sandbox', 'init'], @spawnOpts(cabalRoot), opts
+                  if notificationContent?
+                    notificationContent.appendChild install
+                return opts.onDone()
+              cabalArgs = ['install', '--only-dependencies']
           cabalArgs.push '--builddir=' + buildDir
           cabalArgs.push target if target? and cmd is 'build'
           CabalProcess ?= require './cabal-process'
@@ -105,7 +129,11 @@ class IdeBackend
           cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
         when 'stack'
           cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
-          cabalArgs.push cmd
+          switch cmd
+            when 'deps'
+              cabalArgs.push 'build', '--only-dependencies'
+            else
+              cabalArgs.push cmd
           target = opts.target
           comp = target.target
           if comp?
@@ -180,7 +208,7 @@ class IdeBackend
           classes: ['cancel']
           events:
             click: ->
-              action
+              action()
           before: '#progressBar'
       onMsg: (messages) =>
         @upi.addMessages messages
@@ -225,7 +253,7 @@ class IdeBackend
           classes: ['cancel']
           events:
             click: ->
-              action
+              action()
           before: '#progressBar'
       onMsg: (messages) =>
         @upi.addMessages (messages
@@ -233,6 +261,27 @@ class IdeBackend
           .map (msg) ->
             msg.severity = 'test'
             msg)
+      onDone: (exitCode) =>
+        cancelActionDisp?.dispose?()
+        @upi.setStatus status: 'ready'
+        if exitCode != 0
+          @upi.setStatus status: 'error'
+
+  dependencies: ->
+    @upi.setStatus status: 'progress'
+    @upi.clearMessages ['build']
+    cancelActionDisp = null
+    @cabalBuild 'deps',
+      target: @buildTarget
+      setCancelAction: (action) =>
+        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
+          classes: ['cancel']
+          events:
+            click: ->
+              action()
+          before: '#progressBar'
+      onMsg: (messages) =>
+        @upi.addMessages messages
       onDone: (exitCode) =>
         cancelActionDisp?.dispose?()
         @upi.setStatus status: 'ready'
