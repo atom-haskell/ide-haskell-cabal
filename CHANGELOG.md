@@ -1,3 +1,6 @@
+## 1.5.1
+* Don't fallback to cabal builder
+
 ## 1.5.0
 * Add dependency install, fix cancel
 
