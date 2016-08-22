@@ -20,7 +20,7 @@ class IdeBackend
 
     @buildTarget = state?.target ? {name: 'All'}
     @buildProject = state?.project ? {name: 'Auto'}
-    @buildBuilder = state?.builder ? 'cabal'
+    @buildBuilder = state?.builder
 
     @disposables.add @upi.addPanelControl @builderElem = (document.createElement 'ide-haskell-builder'),
       events:
@@ -65,6 +65,10 @@ class IdeBackend
       atom.project.getPaths()[0] ? process.cwd()
 
   cabalBuild: (cmd, opts) =>
+    unless @buildBuilder?
+      @setBuilder onComplete: => @cabalBuild(cmd, opts)
+      return
+
     # TODO: It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
 
@@ -300,7 +304,7 @@ class IdeBackend
     @projectElem.innerText = "#{name}"
 
   showBuilder: ->
-    name = @buildBuilder ? "cabal"
+    name = @buildBuilder ? "Not set"
     @builderElem.innerText = "#{name}"
 
   setProject: ({onComplete}) ->
