@@ -1,3 +1,6 @@
+## 1.5.0
+* Add dependency install, fix cancel
+
 ## 1.4.1
 * Add ghc-8 to version list
 * Activate on grammar-used
