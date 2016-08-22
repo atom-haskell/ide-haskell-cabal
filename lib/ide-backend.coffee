@@ -66,7 +66,9 @@ class IdeBackend
 
   cabalBuild: (cmd, opts) =>
     unless @buildBuilder?
-      @setBuilder onComplete: => @cabalBuild(cmd, opts)
+      @setBuilder
+        heading: 'Select builder to use with current project'
+        onComplete: => @cabalBuild(cmd, opts)
       return
 
     # TODO: It shouldn't be possible to call this function until cabalProcess
@@ -320,7 +322,7 @@ class IdeBackend
         @showProject()
         onComplete? @buildProject
 
-  setBuilder: ({onComplete}) ->
+  setBuilder: ({onComplete, heading}) ->
     BuilderListView ?= require './views/builder-list-view'
 
     builders = [{name: 'cabal'}, {name: 'stack'}]
@@ -329,6 +331,7 @@ class IdeBackend
 
     new BuilderListView
       items: builders
+      heading: heading
       onConfirmed: (@buildBuilder) =>
         @showBuilder()
         onComplete? @buildBuilder

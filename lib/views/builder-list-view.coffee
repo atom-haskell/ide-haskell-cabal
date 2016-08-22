@@ -2,13 +2,18 @@
 
 module.exports=
 class BuilderListView extends SelectListView
-  initialize: ({@onConfirmed, items}) ->
+  initialize: ({@onConfirmed, items, heading}) ->
     super
     @panel = atom.workspace.addModalPanel
       item: this
       visible: false
     @addClass 'ide-haskell'
     @show items
+    if heading?
+      div = document.createElement('div')
+      div.classList.add 'select-list-heading'
+      div.innerText = heading
+      @prepend div
 
   cancelled: ->
     @panel.destroy()
