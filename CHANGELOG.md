@@ -1,3 +1,6 @@
+## 1.5.2
+* Show heading in builder selection if auto-opened
+
 ## 1.5.1
 * Don't fallback to cabal builder
 
