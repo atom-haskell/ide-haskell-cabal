@@ -1,3 +1,11 @@
+## 1.6.0
+* Guard against re-entrance of cabalBuild
+* Fix progressbar with stack
+* Relax UPI service constraints
+* Reduce complexity of cabalBuild()
+* Defer upi.setStatus until actually starting build
+* Build config changes
+
 ## 1.5.2
 * Show heading in builder selection if auto-opened
 
