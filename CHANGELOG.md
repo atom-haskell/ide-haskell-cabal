@@ -1,3 +1,7 @@
+## 1.6.3
+* Fix #14
+* Remove dependency on aspv
+
 ## 1.6.2
 * Add 'none' builder for ghci in repl
 
