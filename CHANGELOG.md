@@ -1,3 +1,6 @@
+## 1.6.1
+* Bump ahu version
+
 ## 1.6.0
 * Guard against re-entrance of cabalBuild
 * Fix progressbar with stack
