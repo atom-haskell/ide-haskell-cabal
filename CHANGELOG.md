@@ -1,3 +1,6 @@
+## 1.6.2
+* Add 'none' builder for ghci in repl
+
 ## 1.6.1
 * Bump ahu version
 
