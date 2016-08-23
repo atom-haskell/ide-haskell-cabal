@@ -101,6 +101,14 @@ class IdeBackend
       builder.then => @cabalBuild(cmd, opts)
       return
 
+    @upi.setStatus
+      status: 'progress'
+      progress:
+        if opts.onProgress?
+          0.0
+        else
+          null
+
     # TODO: It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
 
@@ -233,7 +241,6 @@ class IdeBackend
   ### Public interface below ###
 
   build: ->
-    @upi.setStatus status: 'progress', progress: 0.0
     @upi.clearMessages ['error', 'warning', 'build']
 
     cancelActionDisp = null
@@ -266,7 +273,6 @@ class IdeBackend
             @upi.setStatus status: 'error'
 
   clean: ->
-    @upi.setStatus status: 'progress'
     @upi.clearMessages ['build']
     @cabalBuild 'clean',
       onMsg: (messages) =>
@@ -277,7 +283,6 @@ class IdeBackend
           @upi.setStatus status: 'error'
 
   test: ->
-    @upi.setStatus status: 'progress'
     @upi.clearMessages ['test']
     cancelActionDisp = null
     @cabalBuild 'test',
@@ -301,7 +306,6 @@ class IdeBackend
           @upi.setStatus status: 'error'
 
   dependencies: ->
-    @upi.setStatus status: 'progress'
     @upi.clearMessages ['build']
     cancelActionDisp = null
     @cabalBuild 'deps',
