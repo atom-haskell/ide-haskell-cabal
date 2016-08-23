@@ -18,6 +18,7 @@ class CabalProcess
   # Spawn a process and log all messages
   constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction}) ->
     @cwd = new Directory options.cwd
+    @running = true
     proc = child_process.spawn command, args, options
 
     setCancelAction? ->
@@ -63,6 +64,7 @@ class CabalProcess
           hasError = true
       onMsg? msgs
       onDone? code, hasError
+      @running = false
 
   # Split the error buffer we have so far into messages
   splitErrBuffer: (isEOF) ->

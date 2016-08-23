@@ -96,6 +96,10 @@ class IdeBackend
       atom.project.getPaths()[0] ? process.cwd()
 
   cabalBuild: (cmd, opts) =>
+    # It shouldn't be possible to call this function until cabalProcess
+    # exits. Otherwise, problems will ensue.
+    return opts.onDone?() if @cabalProcess?.running
+
     builder = @upi.getConfigParam 'builder'
     if typeof builder.then is 'function'
       builder.then => @cabalBuild(cmd, opts)
@@ -109,9 +113,6 @@ class IdeBackend
         else
           null
 
-    # TODO: It shouldn't be possible to call this function until cabalProcess
-    # exits. Otherwise, problems will ensue.
-
     target = @upi.getConfigParam 'target'
 
     cabalRoot = Util.getRootDir(target.dir ? @getActiveProjectPath())
@@ -123,7 +124,7 @@ class IdeBackend
     if cabalFile?
       buildf = @builders[builder.name]
       if buildf?
-        buildf({cmd, opts, target, cabalRoot, spawnOpts: @spawnOpts(cabalRoot)})
+        @cabalProcess = buildf({cmd, opts, target, cabalRoot, spawnOpts: @spawnOpts(cabalRoot)})
       else
         throw new Error("Unkown builder '#{builder?.name ? builder}'")
     else
@@ -166,7 +167,7 @@ class IdeBackend
       cabalArgs.push '--builddir=' + buildDir
       cabalArgs.push target.target if target.target? and cmd is 'build'
       CabalProcess ?= require './cabal-process'
-      cabalProcess = new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
+      new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
 
     'cabal-nix': ({cmd, opts, target, spawnOpts}) ->
       # TODOs:
@@ -180,7 +181,7 @@ class IdeBackend
 
       cabalArgs.push target.target if target.target? and cmd is 'build'
       CabalProcess ?= require './cabal-process'
-      cabalProcess = new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
+      new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
 
     stack: ({cmd, opts, target, spawnOpts}) ->
       cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
@@ -197,7 +198,7 @@ class IdeBackend
         cabalArgs.push comp
       cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
       CabalProcess ?= require './cabal-process'
-      cabalProcess = new CabalProcess 'stack', cabalArgs, spawnOpts, opts
+      new CabalProcess 'stack', cabalArgs, spawnOpts, opts
 
   spawnOpts: (cabalRoot) ->
     # Setup default opts
