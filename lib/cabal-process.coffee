@@ -50,6 +50,10 @@ class CabalProcess
         continue unless msg?
         if msg.uri?
           hasError = true
+      match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/
+      if match?
+        [_, progress, total] = match
+        onProgress?(progress / total)
       onMsg? msgs
 
     proc.on 'close', (code, signal) =>
