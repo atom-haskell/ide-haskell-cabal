@@ -1,38 +1,16 @@
 @import "ui-variables";
 
-ide-haskell-target {
-  font-size: 1.2em;
-  margin: 0 0.5em;
-  &:before {
-    content: "Target: "
-  }
-}
-
-ide-haskell-project {
-  font-size: 1.2em;
-  margin: 0 0.5em;
-  &:before {
-    content: "Project: "
-  }
-}
-
-ide-haskell-builder {
-  font-size: 1.2em;
-  margin: 0 0.5em;
-  &:before {
-    content: "Builder: "
-  }
-}
-
-
 .select-list.ide-haskell {
   .type, .dir {
     float: right;
+    clear: right;
     color: @text-color-subtle;
   }
-  .select-list-heading {
-    color: @text-color-highlight;
-    font-size: 150%;
-    text-align: center;
+  .project {
+    float: left;
+    &::after {
+      content: ":";
+      margin-right: 1ex;
+    }
   }
 }

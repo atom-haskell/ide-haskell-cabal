@@ -33,11 +33,6 @@ module.exports = IdeHaskellCabal =
     @disposables?.dispose?()
     @disposables = null
 
-  serialize: ->
-    target: @target ? @state.target
-    project: @project ? @state.project
-    builder: @builder ? @state.builder
-
   consumeUPI: (service) ->
     # Atom dependencies
     {CompositeDisposable} = require 'atom'
@@ -45,7 +40,7 @@ module.exports = IdeHaskellCabal =
     # Internal dependencies
     IdeBackend = require './ide-backend'
 
-    upi = service.registerPlugin @disposables = new CompositeDisposable
+    upi = service.registerPlugin @disposables = new CompositeDisposable, 'ide-haskell-cabal'
 
     backend = new IdeBackend(upi, @state)
 
@@ -68,20 +63,17 @@ module.exports = IdeHaskellCabal =
         backend.test()
       'ide-haskell-cabal:build-dependencies': ->
         backend.dependencies()
-      'ide-haskell-cabal:set-build-target': =>
-        backend.setTarget onComplete: (@target) =>
-      'ide-haskell-cabal:set-active-project': =>
-        backend.setProject onComplete: (@project) =>
-      'ide-haskell-cabal:set-active-builder': =>
-        backend.setBuilder onComplete: (@builder) =>
+      'ide-haskell-cabal:set-build-target': ->
+        upi.setConfigParam('target')
+      'ide-haskell-cabal:set-active-builder': ->
+        upi.setConfigParam('builder')
 
     upi.setMenu 'Builder', [
         {label: 'Build Project', command: 'ide-haskell-cabal:build'}
         {label: 'Clean Project', command: 'ide-haskell-cabal:clean'}
-        {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
-        {label: 'Set Active Project', command: 'ide-haskell-cabal:set-active-project'}
         {label: 'Test', command: 'ide-haskell-cabal:test'}
         {label: 'Build Dependencies', command: 'ide-haskell-cabal:build-dependencies'}
+        {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
       ]
 
     @disposables

@@ -18,31 +18,64 @@ class IdeBackend
   constructor: (@upi, state) ->
     @disposables = new CompositeDisposable
 
-    @buildTarget = state?.target ? {name: 'All'}
-    @buildProject = state?.project ? {name: 'Auto'}
-    @buildBuilder = state?.builder
-
-    @disposables.add @upi.addPanelControl @builderElem = (document.createElement 'ide-haskell-builder'),
-      events:
-        click: ->
-          atom.commands.dispatch atom.views.getView(atom.workspace),
-            'ide-haskell-cabal:set-active-builder'
-      before: '#progressBar'
-    @showBuilder()
-    @disposables.add @upi.addPanelControl @projectElem = (document.createElement 'ide-haskell-project'),
-      events:
-        click: ->
-          atom.commands.dispatch atom.views.getView(atom.workspace),
-            'ide-haskell-cabal:set-active-project'
-      before: '#progressBar'
-    @showProject()
-    @disposables.add @upi.addPanelControl @targetElem = (document.createElement 'ide-haskell-target'),
-      events:
-        click: ->
-          atom.commands.dispatch atom.views.getView(atom.workspace),
-            'ide-haskell-cabal:set-build-target'
-      before: '#progressBar'
-    @showTarget()
+    @disposables.add @upi.addConfigParam
+      builder:
+        items: ->
+          builders = [{name: 'cabal'}, {name: 'stack'}]
+          if atom.config.get('ide-haskell-cabal.enableNixBuild')
+            builders.push {name: 'cabal-nix'}
+          builders
+        itemTemplate: (item) ->
+          "<li>
+            <div class='name'>#{item.name}</div>
+          </li>
+          "
+        displayTemplate: (item) ->
+          item?.name ? "Not set"
+        itemFilterKey: "name"
+        description: 'Select builder to use with current project'
+      target:
+        default: {}
+        items: ->
+          projects =
+            atom.project.getDirectories().map (d) ->
+              dir = d.getPath()
+              cabalRoot = Util.getRootDir dir
+              [cabalFile] =
+                cabalRoot.getEntriesSync().filter (file) ->
+                  file.isFile() and file.getBaseName().endsWith '.cabal'
+              {dir, cabalFile}
+            .filter ({cabalFile}) -> cabalFile?
+            .map ({dir, cabalFile}) ->
+              cabalFile.read()
+              .then (data) ->
+                new Promise (resolve) ->
+                  Util.parseDotCabal data, resolve
+              .then (project) ->
+                project.targets.unshift({})
+                return project.targets.map (t) ->
+                  t.project = project.name
+                  t.dir = dir
+                  t
+          Promise.all(projects)
+          .then (projects) ->
+            [{}].concat projects...
+        itemTemplate: (tgt) ->
+          "<li>
+            <div class='project'>#{tgt?.project ? 'Auto'}</div>
+            <div class='dir'>#{(tgt?.dir unless tgt.type?) ? ''}</div>
+            <div class='type'>#{tgt?.type ? ''}</div>
+            <div class='name'>#{tgt?.name ? 'All'}</div>
+            <div class='clearfix'></div>
+          </li>
+          "
+        displayTemplate: (item) ->
+          unless item?.project?
+            "Auto"
+          else
+            "#{item.project}: #{item?.name ? 'All'}"
+        itemFilterKey: "name"
+        description: 'Select target to build'
 
   # Get configuration option for active GHC
   getConfigOpt: (opt) ->
@@ -56,8 +89,6 @@ class IdeBackend
     return value
 
   getActiveProjectPath: ->
-    if @buildProject.dir?
-      return @buildProject.dir
     editor = atom.workspace.getActiveTextEditor()
     if editor?.getPath?()?
       path.dirname editor.getPath()
@@ -65,26 +96,26 @@ class IdeBackend
       atom.project.getPaths()[0] ? process.cwd()
 
   cabalBuild: (cmd, opts) =>
-    unless @buildBuilder?
-      @setBuilder
-        heading: 'Select builder to use with current project'
-        onComplete: => @cabalBuild(cmd, opts)
+    builder = @upi.getConfigParam 'builder'
+    if typeof builder.then is 'function'
+      builder.then => @cabalBuild(cmd, opts)
       return
 
     # TODO: It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
 
-    cabalRoot = Util.getRootDir @getActiveProjectPath()
+    target = @upi.getConfigParam 'target'
+
+    cabalRoot = Util.getRootDir(target.dir ? @getActiveProjectPath())
 
     [cabalFile] =
       cabalRoot.getEntriesSync().filter (file) ->
         file.isFile() and file.getBaseName().endsWith '.cabal'
 
     if cabalFile?
-      switch @buildBuilder
+      switch builder.name
         when 'cabal'
           buildDir = @getConfigOpt 'buildDir'
-          target = opts.target.target
           cabalArgs = [cmd]
           switch cmd
             when 'build', 'test'
@@ -109,6 +140,7 @@ class IdeBackend
                   install.innerText = 'Click here to create sandbox'
                   install.classList.add 'btn', 'btn-warning', 'icon', 'icon-rocket'
                   install.addEventListener 'click', =>
+                    notification.dismiss()
                     CabalProcess ?= require './cabal-process'
                     new CabalProcess 'cabal', ['sandbox', 'init'], @spawnOpts(cabalRoot), opts
                   if notificationContent?
@@ -116,7 +148,7 @@ class IdeBackend
                 return opts.onDone()
               cabalArgs = ['install', '--only-dependencies']
           cabalArgs.push '--builddir=' + buildDir
-          cabalArgs.push target if target? and cmd is 'build'
+          cabalArgs.push target.target if target.target? and cmd is 'build'
           CabalProcess ?= require './cabal-process'
           cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
         when 'cabal-nix'
@@ -129,8 +161,7 @@ class IdeBackend
             atom.notifications.addWarning "Command '#{cmd}' is not implemented for cabal-nix"
             return opts.onDone()
 
-          target = opts.target.target
-          cabalArgs.push target if target? and cmd is 'build'
+          cabalArgs.push target.target if target.target? and cmd is 'build'
           CabalProcess ?= require './cabal-process'
           cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
         when 'stack'
@@ -140,7 +171,6 @@ class IdeBackend
               cabalArgs.push 'build', '--only-dependencies'
             else
               cabalArgs.push cmd
-          target = opts.target
           comp = target.target
           if comp?
             if comp.startsWith 'lib:'
@@ -151,7 +181,7 @@ class IdeBackend
           CabalProcess ?= require './cabal-process'
           cabalProcess = new CabalProcess 'stack', cabalArgs, @spawnOpts(cabalRoot), opts
         else
-          throw new Error("Unkown builder '#{@buildBuilder}'")
+          throw new Error("Unkown builder '#{builder?.name ? builder}'")
     else
       @cabalFileError()
 
@@ -208,7 +238,6 @@ class IdeBackend
 
     cancelActionDisp = null
     @cabalBuild 'build',
-      target: @buildTarget
       setCancelAction: (action) =>
         cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
           classes: ['cancel']
@@ -240,7 +269,6 @@ class IdeBackend
     @upi.setStatus status: 'progress'
     @upi.clearMessages ['build']
     @cabalBuild 'clean',
-      target: @buildTarget
       onMsg: (messages) =>
         @upi.addMessages messages
       onDone: (exitCode) =>
@@ -253,7 +281,6 @@ class IdeBackend
     @upi.clearMessages ['test']
     cancelActionDisp = null
     @cabalBuild 'test',
-      target: @buildTarget
       setCancelAction: (action) =>
         cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
           classes: ['cancel']
@@ -278,7 +305,6 @@ class IdeBackend
     @upi.clearMessages ['build']
     cancelActionDisp = null
     @cabalBuild 'deps',
-      target: @buildTarget
       setCancelAction: (action) =>
         cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
           classes: ['cancel']
@@ -293,74 +319,6 @@ class IdeBackend
         @upi.setStatus status: 'ready'
         if exitCode != 0
           @upi.setStatus status: 'error'
-
-  showTarget: ->
-    {type, name} = @buildTarget ? {name: "All"}
-    if type
-      @targetElem.innerText = "#{name} (#{type})"
-    else
-      @targetElem.innerText = "#{name}"
-
-  showProject: ->
-    {name} = @buildProject ? {name: "Auto"}
-    @projectElem.innerText = "#{name}"
-
-  showBuilder: ->
-    name = @buildBuilder ? "Not set"
-    @builderElem.innerText = "#{name}"
-
-  setProject: ({onComplete}) ->
-    ProjectListView ?= require './views/project-list-view'
-
-    projects = atom.project.getDirectories().map (d) ->
-      name: d.getBaseName()
-      dir: d.getPath()
-
-    new ProjectListView
-      items: projects
-      onConfirmed: (@buildProject) =>
-        @showProject()
-        onComplete? @buildProject
-
-  setBuilder: ({onComplete, heading}) ->
-    BuilderListView ?= require './views/builder-list-view'
-
-    builders = [{name: 'cabal'}, {name: 'stack'}]
-    if atom.config.get('ide-haskell-cabal.enableNixBuild')
-      builders.push {name: 'cabal-nix'}
-
-    new BuilderListView
-      items: builders
-      heading: heading
-      onConfirmed: (@buildBuilder) =>
-        @showBuilder()
-        onComplete? @buildBuilder
-
-  setTarget: ({onComplete}) ->
-    TargetListView ?= require './views/target-list-view'
-    cabalRoot = Util.getRootDir @getActiveProjectPath()
-
-    [cabalFile] =
-      cabalRoot.getEntriesSync().filter (file) ->
-        file.isFile() and file.getBaseName().endsWith '.cabal'
-
-    unless cabalFile?
-      @cabalFileError()
-      return
-
-    cabalFile.read()
-    .then (data) ->
-      new Promise (resolve) ->
-        Util.parseDotCabal data, resolve
-    .then (targets) =>
-      new TargetListView
-        items:
-          targets.targets.map (t) ->
-            t.project = targets.name
-            return t
-        onConfirmed: (@buildTarget) =>
-          @showTarget()
-          onComplete? @buildTarget
 
   cabalFileError: ->
     @upi.addMessages [
