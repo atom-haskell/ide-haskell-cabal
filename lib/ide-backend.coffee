@@ -125,7 +125,15 @@ class IdeBackend
     if cabalFile?
       buildf = @builders[builder.name]
       if buildf?
-        @cabalProcess = buildf({cmd, opts, target, cabalRoot, spawnOpts: @spawnOpts(cabalRoot)})
+        args = {
+          cmd
+          opts
+          target
+          cabalRoot
+          spawnOpts: @spawnOpts(cabalRoot)
+          buildDir: @getConfigOpt('buildDir')
+        }
+        @cabalProcess = buildf args
       else
         throw new Error("Unkown builder '#{builder?.name ? builder}'")
     else
@@ -133,8 +141,7 @@ class IdeBackend
 
   builders:
     none: ({opts}) -> opts.onDone(0, false)
-    cabal: ({cmd, opts, target, cabalRoot, spawnOpts}) ->
-      buildDir = @getConfigOpt 'buildDir'
+    cabal: ({cmd, opts, target, cabalRoot, spawnOpts, buildDir}) ->
       cabalArgs = [cmd]
       switch cmd
         when 'build', 'test'
