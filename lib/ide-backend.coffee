@@ -24,6 +24,7 @@ class IdeBackend
           builders = [{name: 'cabal'}, {name: 'stack'}]
           if atom.config.get('ide-haskell-cabal.enableNixBuild')
             builders.push {name: 'cabal-nix'}
+          builders.push {name: 'none'}
           builders
         itemTemplate: (item) ->
           "<li>
@@ -131,6 +132,7 @@ class IdeBackend
       @cabalFileError()
 
   builders:
+    none: ({opts}) -> opts.onDone(0, false)
     cabal: ({cmd, opts, target, cabalRoot, spawnOpts}) ->
       buildDir = @getConfigOpt 'buildDir'
       cabalArgs = [cmd]
