@@ -121,77 +121,83 @@ class IdeBackend
         file.isFile() and file.getBaseName().endsWith '.cabal'
 
     if cabalFile?
-      switch builder.name
-        when 'cabal'
-          buildDir = @getConfigOpt 'buildDir'
-          cabalArgs = [cmd]
-          switch cmd
-            when 'build', 'test'
-              cabalArgs.push '--only'
-            when 'clean'
-              cabalArgs.push '--save-configure'
-            when 'deps'
-              igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
-              se = cabalRoot.getFile('cabal.sandbox.config').existsSync()
-              unless se or igns
-                notification = atom.notifications.addWarning 'No sandbox found, stopping',
-                  dismissable: true
-                  detail: 'ide-haskell-cabal did not find sandbox configuration
-                         \nfile. Installing dependencies without sandbox is
-                         \ndangerous and is not recommended. It is suggested to
-                         \ncreate a sandbox right now.'
-                try
-                  notificationView = atom.views.getView(notification)
-                  notificationContent = notificationView.querySelector('.detail-content')
-                  install = document.createElement('button')
-                  install.style['margin-top'] = '1em'
-                  install.innerText = 'Click here to create sandbox'
-                  install.classList.add 'btn', 'btn-warning', 'icon', 'icon-rocket'
-                  install.addEventListener 'click', =>
-                    notification.dismiss()
-                    CabalProcess ?= require './cabal-process'
-                    new CabalProcess 'cabal', ['sandbox', 'init'], @spawnOpts(cabalRoot), opts
-                  if notificationContent?
-                    notificationContent.appendChild install
-                return opts.onDone()
-              cabalArgs = ['install', '--only-dependencies']
-          cabalArgs.push '--builddir=' + buildDir
-          cabalArgs.push target.target if target.target? and cmd is 'build'
-          CabalProcess ?= require './cabal-process'
-          cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
-        when 'cabal-nix'
-          # TODOs:
-          #   * Commands other than 'build'
-          #   * Support for buildDir
-          if cmd is 'build'
-            cabalArgs = ['new-build']
-          else
-            atom.notifications.addWarning "Command '#{cmd}' is not implemented for cabal-nix"
-            return opts.onDone()
-
-          cabalArgs.push target.target if target.target? and cmd is 'build'
-          CabalProcess ?= require './cabal-process'
-          cabalProcess = new CabalProcess 'cabal', cabalArgs, @spawnOpts(cabalRoot), opts
-        when 'stack'
-          cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
-          switch cmd
-            when 'deps'
-              cabalArgs.push 'build', '--only-dependencies'
-            else
-              cabalArgs.push cmd
-          comp = target.target
-          if comp?
-            if comp.startsWith 'lib:'
-              comp = 'lib'
-            comp = "#{target.project}:#{comp}"
-            cabalArgs.push comp
-          cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
-          CabalProcess ?= require './cabal-process'
-          cabalProcess = new CabalProcess 'stack', cabalArgs, @spawnOpts(cabalRoot), opts
-        else
-          throw new Error("Unkown builder '#{builder?.name ? builder}'")
+      buildf = @builders[builder.name]
+      if buildf?
+        buildf({cmd, opts, target, cabalRoot, spawnOpts: @spawnOpts(cabalRoot)})
+      else
+        throw new Error("Unkown builder '#{builder?.name ? builder}'")
     else
       @cabalFileError()
+
+  builders:
+    cabal: ({cmd, opts, target, cabalRoot, spawnOpts}) ->
+      buildDir = @getConfigOpt 'buildDir'
+      cabalArgs = [cmd]
+      switch cmd
+        when 'build', 'test'
+          cabalArgs.push '--only'
+        when 'clean'
+          cabalArgs.push '--save-configure'
+        when 'deps'
+          igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
+          se = cabalRoot.getFile('cabal.sandbox.config').existsSync()
+          unless se or igns
+            notification = atom.notifications.addWarning 'No sandbox found, stopping',
+              dismissable: true
+              detail: 'ide-haskell-cabal did not find sandbox configuration
+                     \nfile. Installing dependencies without sandbox is
+                     \ndangerous and is not recommended. It is suggested to
+                     \ncreate a sandbox right now.'
+            try
+              notificationView = atom.views.getView(notification)
+              notificationContent = notificationView.querySelector('.detail-content')
+              install = document.createElement('button')
+              install.style['margin-top'] = '1em'
+              install.innerText = 'Click here to create sandbox'
+              install.classList.add 'btn', 'btn-warning', 'icon', 'icon-rocket'
+              install.addEventListener 'click', ->
+                notification.dismiss()
+                CabalProcess ?= require './cabal-process'
+                new CabalProcess 'cabal', ['sandbox', 'init'], spawnOpts, opts
+              if notificationContent?
+                notificationContent.appendChild install
+            return opts.onDone()
+          cabalArgs = ['install', '--only-dependencies']
+      cabalArgs.push '--builddir=' + buildDir
+      cabalArgs.push target.target if target.target? and cmd is 'build'
+      CabalProcess ?= require './cabal-process'
+      cabalProcess = new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
+
+    'cabal-nix': ({cmd, opts, target, spawnOpts}) ->
+      # TODOs:
+      #   * Commands other than 'build'
+      #   * Support for buildDir
+      if cmd is 'build'
+        cabalArgs = ['new-build']
+      else
+        atom.notifications.addWarning "Command '#{cmd}' is not implemented for cabal-nix"
+        return opts.onDone()
+
+      cabalArgs.push target.target if target.target? and cmd is 'build'
+      CabalProcess ?= require './cabal-process'
+      cabalProcess = new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
+
+    stack: ({cmd, opts, target, spawnOpts}) ->
+      cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
+      switch cmd
+        when 'deps'
+          cabalArgs.push 'build', '--only-dependencies'
+        else
+          cabalArgs.push cmd
+      comp = target.target
+      if comp?
+        if comp.startsWith 'lib:'
+          comp = 'lib'
+        comp = "#{target.project}:#{comp}"
+        cabalArgs.push comp
+      cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
+      CabalProcess ?= require './cabal-process'
+      cabalProcess = new CabalProcess 'stack', cabalArgs, spawnOpts, opts
 
   spawnOpts: (cabalRoot) ->
     # Setup default opts
