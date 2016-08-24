@@ -172,16 +172,14 @@ class IdeBackend
               install.classList.add 'btn', 'btn-warning', 'icon', 'icon-rocket'
               install.addEventListener 'click', ->
                 notification.dismiss()
-                CabalProcess ?= require './cabal-process'
-                new CabalProcess 'cabal', ['sandbox', 'init'], spawnOpts, opts
+                require('./cabal-process') 'cabal', ['sandbox', 'init'], spawnOpts, opts
               if notificationContent?
                 notificationContent.appendChild install
             return opts.onDone()
           cabalArgs = ['install', '--only-dependencies']
       cabalArgs.push '--builddir=' + buildDir
       cabalArgs.push target.target if target.target? and cmd is 'build'
-      CabalProcess ?= require './cabal-process'
-      new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
+      require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts
 
     'cabal-nix': ({cmd, opts, target, spawnOpts}) ->
       # TODOs:
@@ -194,8 +192,7 @@ class IdeBackend
         return opts.onDone()
 
       cabalArgs.push target.target if target.target? and cmd is 'build'
-      CabalProcess ?= require './cabal-process'
-      new CabalProcess 'cabal', cabalArgs, spawnOpts, opts
+      require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts
 
     stack: ({cmd, opts, target, spawnOpts}) ->
       cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
@@ -211,8 +208,7 @@ class IdeBackend
         comp = "#{target.project}:#{comp}"
         cabalArgs.push comp
       cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
-      CabalProcess ?= require './cabal-process'
-      new CabalProcess 'stack', cabalArgs, spawnOpts, opts
+      require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts
 
   spawnOpts: (cabalRoot) ->
     # Setup default opts
@@ -275,27 +271,26 @@ class IdeBackend
                   action()
               before: '#progressBar'
       onMsg: (messages) =>
-        console.error messages.map ({severity}) -> severity
-        @upi.addMessages(messages.filter ({severity}) -> severity in messageTypes)
+        @upi.addMessages messages.filter ({severity}) -> severity in messageTypes
       onProgress:
         if canCancel
           (progress) =>
             @upi.setStatus {status: 'progress', progress}
-      onDone: (exitCode, hasError) =>
-        cancelActionDisp?.dispose?()
-        @upi.setStatus status: 'ready'
-        # cabal returns failure when there are type errors _or_ when it can't
-        # compile the code at all (i.e., when there are missing dependencies).
-        # Since it's hard to distinguish between these days, we look at the
-        # parsed errors; if there are any, we assume that it at least managed to
-        # start compiling (all dependencies available) and so we ignore the
-        # exit code and just report the errors. Otherwise, we show an atom error
-        # with the raw stderr output from cabal.
-        if exitCode != 0
-          if hasError
-            @upi.setStatus status: 'warning'
-          else
-            @upi.setStatus status: 'error'
+    .then ({exitCode, hasError}) =>
+      cancelActionDisp?.dispose?()
+      @upi.setStatus status: 'ready'
+      # cabal returns failure when there are type errors _or_ when it can't
+      # compile the code at all (i.e., when there are missing dependencies).
+      # Since it's hard to distinguish between these days, we look at the
+      # parsed errors; if there are any, we assume that it at least managed to
+      # start compiling (all dependencies available) and so we ignore the
+      # exit code and just report the errors. Otherwise, we show an atom error
+      # with the raw stderr output from cabal.
+      if exitCode != 0
+        if hasError
+          @upi.setStatus status: 'warning'
+        else
+          @upi.setStatus status: 'error'
 
   ### Public interface below ###
 

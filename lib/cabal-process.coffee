@@ -13,7 +13,6 @@ matchLoc = /(\S+):(\d+):(\d+):( Warning:)?\n?([^]*)/
 # Start of a Cabal message
 startOfMessage = /\n\S/
 
-module.exports =
 class CabalProcess
   # Spawn a process and log all messages
   constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction, @severity}) ->
@@ -57,13 +56,13 @@ class CabalProcess
         onProgress?(progress / total)
       onMsg? msgs
 
-    proc.on 'close', (code, signal) =>
+    proc.on 'close', (exitCode, signal) =>
       msgs = @splitErrBuffer true
       for msg in msgs
         if msg.uri?
           hasError = true
       onMsg? msgs
-      onDone? code, hasError
+      onDone? {exitCode, hasError}
       @running = false
 
   # Split the error buffer we have so far into messages
@@ -112,3 +111,11 @@ class CabalProcess
       else
         message: raw
         severity: @severity
+
+module.exports = runCabalProcess =
+  (command, args, options, pars) ->
+    newPars = {}
+    newPars[k] = v for k, v of pars
+    new Promise (resolve) ->
+      newPars.onDone = resolve
+      new CabalProcess(command, args, options, newPars)
