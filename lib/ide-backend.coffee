@@ -259,24 +259,28 @@ class IdeBackend
 
     return opts
 
-  ### Public interface below ###
-
-  build: ->
-    @upi.clearMessages ['error', 'warning', 'build']
+  runCabalCommand: (command, {messageTypes, defaultSeverity, canCancel}) ->
+    @upi.clearMessages messageTypes
 
     cancelActionDisp = null
-    @cabalBuild 'build',
-      setCancelAction: (action) =>
-        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
-          classes: ['cancel']
-          events:
-            click: ->
-              action()
-          before: '#progressBar'
+    @cabalBuild command,
+      severity: defaultSeverity
+      setCancelAction:
+        if canCancel
+          (action) =>
+            cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
+              classes: ['cancel']
+              events:
+                click: ->
+                  action()
+              before: '#progressBar'
       onMsg: (messages) =>
-        @upi.addMessages messages
-      onProgress: (progress) =>
-        @upi.setStatus {status: 'progress', progress}
+        console.error messages.map ({severity}) -> severity
+        @upi.addMessages(messages.filter ({severity}) -> severity in messageTypes)
+      onProgress:
+        if canCancel
+          (progress) =>
+            @upi.setStatus {status: 'progress', progress}
       onDone: (exitCode, hasError) =>
         cancelActionDisp?.dispose?()
         @upi.setStatus status: 'ready'
@@ -293,57 +297,31 @@ class IdeBackend
           else
             @upi.setStatus status: 'error'
 
+  ### Public interface below ###
+
+  build: ->
+    @runCabalCommand 'build',
+      messageTypes: ['error', 'warning', 'build']
+      defaultSeverity: 'build'
+      canCancel: true
+
   clean: ->
-    @upi.clearMessages ['build']
-    @cabalBuild 'clean',
-      onMsg: (messages) =>
-        @upi.addMessages messages
-      onDone: (exitCode) =>
-        @upi.setStatus status: 'ready'
-        if exitCode != 0
-          @upi.setStatus status: 'error'
+    @runCabalCommand 'clean',
+      messageTypes: ['build']
+      defaultSeverity: 'build'
+      canCancel: false
 
   test: ->
-    @upi.clearMessages ['test']
-    cancelActionDisp = null
-    @cabalBuild 'test',
-      setCancelAction: (action) =>
-        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
-          classes: ['cancel']
-          events:
-            click: ->
-              action()
-          before: '#progressBar'
-      onMsg: (messages) =>
-        @upi.addMessages (messages
-          .filter ({severity}) -> severity is 'build'
-          .map (msg) ->
-            msg.severity = 'test'
-            msg)
-      onDone: (exitCode) =>
-        cancelActionDisp?.dispose?()
-        @upi.setStatus status: 'ready'
-        if exitCode != 0
-          @upi.setStatus status: 'error'
+    @runCabalCommand 'test',
+      messageTypes: ['error', 'warning', 'build', 'test']
+      defaultSeverity: 'test'
+      canCancel: true
 
   dependencies: ->
-    @upi.clearMessages ['build']
-    cancelActionDisp = null
-    @cabalBuild 'deps',
-      setCancelAction: (action) =>
-        cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
-          classes: ['cancel']
-          events:
-            click: ->
-              action()
-          before: '#progressBar'
-      onMsg: (messages) =>
-        @upi.addMessages messages
-      onDone: (exitCode) =>
-        cancelActionDisp?.dispose?()
-        @upi.setStatus status: 'ready'
-        if exitCode != 0
-          @upi.setStatus status: 'error'
+    @runCabalCommand 'deps',
+      messageTypes: ['build']
+      defaultSeverity: 'build'
+      canCancel: true
 
   cabalFileError: ->
     @upi.addMessages [

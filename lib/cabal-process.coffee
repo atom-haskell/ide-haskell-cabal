@@ -16,7 +16,7 @@ startOfMessage = /\n\S/
 module.exports =
 class CabalProcess
   # Spawn a process and log all messages
-  constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction}) ->
+  constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction, @severity}) ->
     @cwd = new Directory options.cwd
     @running = true
     proc = child_process.spawn command, args, options
@@ -26,14 +26,14 @@ class CabalProcess
       try kill proc.pid
       try proc.kill()
 
-    proc.stdout.on 'data', (data) ->
+    proc.stdout.on 'data', (data) =>
       match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/
       if match?
         [_, progress, total] = match
         onProgress?(progress / total)
       onMsg? [
         message: data.toString()
-        severity: 'build'
+        severity: @severity
       ]
 
     # We collect stderr from the process as it comes in and split it into
@@ -111,4 +111,4 @@ class CabalProcess
         severity: typ
       else
         message: raw
-        severity: 'build'
+        severity: @severity
