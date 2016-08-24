@@ -103,7 +103,8 @@ class IdeBackend
   cabalBuild: (cmd, opts) =>
     # It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
-    return opts.onDone?() if @cabalProcess?.running
+    return Promise.resolve({}) if @running
+    @running = true
 
     Promise.all [@upi.getConfigParam('builder'), @upi.getConfigParam('target')]
     .then ([builder, target]) =>
@@ -132,20 +133,29 @@ class IdeBackend
             spawnOpts: @spawnOpts(cabalRoot)
             buildDir: @getConfigOpt('buildDir')
           }
-          @cabalProcess = buildf args
+          buildf args
         else
           throw new Error("Unkown builder '#{builder?.name ? builder}'")
       else
-        @cabalFileError()
-    .catch (error) ->
+        @upi.addMessages [
+          message: 'No cabal file found'
+          severity: 'error'
+        ]
+        return {}
+    .then (res) =>
+      @running = false
+      return res
+    .catch (error) =>
+      @running = false
       if error?
+        console.error error
         atom.notifications.addFatalError error.toString(),
           detail: error
           dismissable: true
-      opts.onDone?()
+      return {}
 
   builders:
-    none: ({opts}) -> opts.onDone(0, false)
+    none: ({opts}) -> return {exitCode: 0, hasError: false}
     cabal: ({cmd, opts, target, cabalRoot, spawnOpts, buildDir}) ->
       cabalArgs = [cmd]
       switch cmd
@@ -175,7 +185,7 @@ class IdeBackend
                 require('./cabal-process') 'cabal', ['sandbox', 'init'], spawnOpts, opts
               if notificationContent?
                 notificationContent.appendChild install
-            return opts.onDone()
+            return {}
           cabalArgs = ['install', '--only-dependencies']
       cabalArgs.push '--builddir=' + buildDir
       cabalArgs.push target.target if target.target? and cmd is 'build'
@@ -189,7 +199,7 @@ class IdeBackend
         cabalArgs = ['new-build']
       else
         atom.notifications.addWarning "Command '#{cmd}' is not implemented for cabal-nix"
-        return opts.onDone()
+        return {}
 
       cabalArgs.push target.target if target.target? and cmd is 'build'
       require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts
@@ -317,10 +327,3 @@ class IdeBackend
       messageTypes: ['build']
       defaultSeverity: 'build'
       canCancel: true
-
-  cabalFileError: ->
-    @upi.addMessages [
-      message: 'No cabal file found'
-      severity: 'error'
-    ]
-    @upi.setStatus status: 'error'
