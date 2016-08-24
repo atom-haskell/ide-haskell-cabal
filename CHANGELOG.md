@@ -1,3 +1,6 @@
+## 1.6.4
+* Fix ideBackend disposal, use UPI 0.2.0
+
 ## 1.6.3
 * Fix #14
 * Remove dependency on aspv
