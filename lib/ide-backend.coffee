@@ -218,7 +218,17 @@ class IdeBackend
         comp = "#{target.project}:#{comp}"
         cabalArgs.push comp
       cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
-      require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts
+      if cmd is 'test'
+        opts.severity = 'build'
+        require('./cabal-process') 'stack', cabalArgs.concat(['--no-run-tests']), spawnOpts, opts
+        .then (res) ->
+          if res.exitCode isnt 0
+            res
+          else
+            opts.severity = 'test'
+            require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts
+      else
+        require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts
 
   spawnOpts: (cabalRoot) ->
     # Setup default opts
