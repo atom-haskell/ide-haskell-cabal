@@ -15,7 +15,7 @@ startOfMessage = /\n\S/
 
 class CabalProcess
   # Spawn a process and log all messages
-  constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction, @severity}) ->
+  constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction, @severity, sw}) ->
     @cwd = new Directory options.cwd
     @running = true
     proc = child_process.spawn command, args, options
@@ -30,6 +30,8 @@ class CabalProcess
       if match?
         [_, progress, total] = match
         onProgress?(progress / total)
+      if newSev = sw(data.toString())
+        @severity = newSev
       onMsg? [
         message: data.toString()
         severity: @severity
