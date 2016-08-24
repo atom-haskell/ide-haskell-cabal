@@ -24,9 +24,7 @@ ghcVerProps =
     order: 40
 
 module.exports = IdeHaskellCabal =
-  subscriptions: null
-
-  activate: (@state) ->
+  activate: ->
     @disposables = null
 
   deactivate: ->
@@ -35,14 +33,16 @@ module.exports = IdeHaskellCabal =
 
   consumeUPI: (service) ->
     # Atom dependencies
-    {CompositeDisposable} = require 'atom'
+    {Disposable, CompositeDisposable} = require 'atom'
 
     # Internal dependencies
     IdeBackend = require './ide-backend'
 
     upi = service.registerPlugin @disposables = new CompositeDisposable, 'ide-haskell-cabal'
 
-    backend = new IdeBackend(upi, @state)
+    backend = new IdeBackend(upi)
+
+    @disposables.add new Disposable -> backend.destroy()
 
     upi.setMessageTypes
       error: {}

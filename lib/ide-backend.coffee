@@ -15,7 +15,7 @@ BuilderListView = null
 module.exports =
 class IdeBackend
 
-  constructor: (@upi, state) ->
+  constructor: (@upi) ->
     @disposables = new CompositeDisposable
 
     @disposables.add @upi.addConfigParam
@@ -78,6 +78,10 @@ class IdeBackend
         itemFilterKey: "name"
         description: 'Select target to build'
 
+  destroy: ->
+    @disposables.dispose()
+    @upi = null
+
   # Get configuration option for active GHC
   getConfigOpt: (opt) ->
     value = switch atom.config.get 'ide-haskell-cabal.cabal.activeGhcVersion'
@@ -101,43 +105,44 @@ class IdeBackend
     # exits. Otherwise, problems will ensue.
     return opts.onDone?() if @cabalProcess?.running
 
-    builder = @upi.getConfigParam 'builder'
-    if typeof builder.then is 'function'
-      builder.then => @cabalBuild(cmd, opts)
-      return
+    Promise.all [@upi.getConfigParam('builder'), @upi.getConfigParam('target')]
+    .then ([builder, target]) =>
+      @upi.setStatus
+        status: 'progress'
+        progress:
+          if opts.onProgress?
+            0.0
+          else
+            null
 
-    @upi.setStatus
-      status: 'progress'
-      progress:
-        if opts.onProgress?
-          0.0
+      cabalRoot = Util.getRootDir(target.dir ? @getActiveProjectPath())
+
+      [cabalFile] =
+        cabalRoot.getEntriesSync().filter (file) ->
+          file.isFile() and file.getBaseName().endsWith '.cabal'
+
+      if cabalFile?
+        buildf = @builders[builder.name]
+        if buildf?
+          args = {
+            cmd
+            opts
+            target
+            cabalRoot
+            spawnOpts: @spawnOpts(cabalRoot)
+            buildDir: @getConfigOpt('buildDir')
+          }
+          @cabalProcess = buildf args
         else
-          null
-
-    target = @upi.getConfigParam 'target'
-
-    cabalRoot = Util.getRootDir(target.dir ? @getActiveProjectPath())
-
-    [cabalFile] =
-      cabalRoot.getEntriesSync().filter (file) ->
-        file.isFile() and file.getBaseName().endsWith '.cabal'
-
-    if cabalFile?
-      buildf = @builders[builder.name]
-      if buildf?
-        args = {
-          cmd
-          opts
-          target
-          cabalRoot
-          spawnOpts: @spawnOpts(cabalRoot)
-          buildDir: @getConfigOpt('buildDir')
-        }
-        @cabalProcess = buildf args
+          throw new Error("Unkown builder '#{builder?.name ? builder}'")
       else
-        throw new Error("Unkown builder '#{builder?.name ? builder}'")
-    else
-      @cabalFileError()
+        @cabalFileError()
+    .catch (error) ->
+      if error?
+        atom.notifications.addFatalError error.toString(),
+          detail: error
+          dismissable: true
+      opts.onDone?()
 
   builders:
     none: ({opts}) -> opts.onDone(0, false)
