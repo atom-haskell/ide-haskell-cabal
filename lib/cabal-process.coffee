@@ -15,7 +15,7 @@ startOfMessage = /\n\S/
 
 class CabalProcess
   # Spawn a process and log all messages
-  constructor: (command, args, options, {onMsg, onProgress, onDone, setCancelAction, @severity, sw}) ->
+  constructor: (command, args, options, {onMsg, @onProgress, onDone, setCancelAction, @severity, @severityChangeRx}) ->
     @cwd = new Directory options.cwd
     @running = true
     proc = child_process.spawn command, args, options
@@ -26,12 +26,8 @@ class CabalProcess
       try proc.kill()
 
     proc.stdout.on 'data', (data) =>
-      match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/
-      if match?
-        [_, progress, total] = match
-        onProgress?(progress / total)
-      if newSev = sw(data.toString())
-        @severity = newSev
+      @checkProgress(data.toString())
+      @checkSeverityChange(data.toString())
       onMsg? [
         message: data.toString()
         severity: @severity
@@ -47,15 +43,13 @@ class CabalProcess
 
     proc.stderr.on 'data', (data) =>
       @errBuffer += data.toString()
+      @checkSeverityChange(data.toString())
+      @checkProgress(data.toString())
       msgs = @splitErrBuffer false
       for msg in msgs
         continue unless msg?
         if msg.uri?
           hasError = true
-      match = data.toString().match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/
-      if match?
-        [_, progress, total] = match
-        onProgress?(progress / total)
       onMsg? msgs
 
     proc.on 'close', (exitCode, signal) =>
@@ -113,6 +107,18 @@ class CabalProcess
       else
         message: raw
         severity: @severity
+
+  checkSeverityChange: (data) ->
+    for sev, rx of @severityChangeRx
+      if data.match(rx)
+        @severity = sev
+        break
+
+  checkProgress: (data) ->
+    match = data.match /\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/
+    if match?
+      [_, progress, total] = match
+      @onProgress?(progress / total)
 
 module.exports = runCabalProcess =
   (command, args, options, pars) ->

@@ -190,11 +190,10 @@ class IdeBackend
       cabalArgs.push '--builddir=' + buildDir
       cabalArgs.push target.target if target.target? and cmd is 'build'
       if cmd is 'test'
-        opts.sw = (s) ->
-          if s.match(/Running \d+ test suites\.\.\./)
-            'test'
+        opts.severityChangeRx =
+          test: /Running \d+ test suites\.\.\./
         opts.severity = 'build'
-        cabalArgs.push '--show-details=streaming'
+        cabalArgs.push '--show-details=always'
       require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts
 
     'cabal-nix': ({cmd, opts, target, spawnOpts}) ->
