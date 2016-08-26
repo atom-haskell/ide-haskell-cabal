@@ -165,7 +165,8 @@ class IdeBackend
           cabalArgs.push '--save-configure'
         when 'deps'
           igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
-          se = cabalRoot.getFile('cabal.sandbox.config').existsSync()
+          sandboxConfig = spawnOpts.env.CABAL_SANDBOX_CONFIG ? 'cabal.sandbox.config'
+          se = cabalRoot.getFile(sandboxConfig).existsSync()
           unless se or igns
             notification = atom.notifications.addWarning 'No sandbox found, stopping',
               dismissable: true
