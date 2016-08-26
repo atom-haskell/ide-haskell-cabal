@@ -82,17 +82,6 @@ class IdeBackend
     @disposables.dispose()
     @upi = null
 
-  # Get configuration option for active GHC
-  getConfigOpt: (opt) ->
-    value = switch atom.config.get 'ide-haskell-cabal.cabal.activeGhcVersion'
-      when '7.2'  then atom.config.get "ide-haskell-cabal.cabal.ghc702.#{opt}"
-      when '7.4'  then atom.config.get "ide-haskell-cabal.cabal.ghc704.#{opt}"
-      when '7.6'  then atom.config.get "ide-haskell-cabal.cabal.ghc706.#{opt}"
-      when '7.8'  then atom.config.get "ide-haskell-cabal.cabal.ghc708.#{opt}"
-      when '7.10' then atom.config.get "ide-haskell-cabal.cabal.ghc710.#{opt}"
-      when '8.0'  then atom.config.get "ide-haskell-cabal.cabal.ghc800.#{opt}"
-    return value
-
   getActiveProjectPath: ->
     editor = atom.workspace.getActiveTextEditor()
     if editor?.getPath?()?
@@ -123,17 +112,14 @@ class IdeBackend
           file.isFile() and file.getBaseName().endsWith '.cabal'
 
       if cabalFile?
-        buildf = @builders[builder.name]
-        if buildf?
-          args = {
+        builder = try require "./builders/#{builder.name}"
+        if builder?
+          (new builder).build {
             cmd
             opts
             target
             cabalRoot
-            spawnOpts: @spawnOpts(cabalRoot)
-            buildDir: @getConfigOpt('buildDir')
           }
-          buildf args
         else
           throw new Error("Unkown builder '#{builder?.name ? builder}'")
       else
@@ -154,133 +140,6 @@ class IdeBackend
           dismissable: true
       return {}
 
-  builders:
-    none: ({opts}) -> return {exitCode: 0, hasError: false}
-    cabal: ({cmd, opts, target, cabalRoot, spawnOpts, buildDir}) ->
-      cabalArgs = [cmd]
-      switch cmd
-        when 'build', 'test'
-          cabalArgs.push '--only'
-        when 'clean'
-          cabalArgs.push '--save-configure'
-        when 'deps'
-          igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
-          sandboxConfig = spawnOpts.env.CABAL_SANDBOX_CONFIG ? 'cabal.sandbox.config'
-          se = cabalRoot.getFile(sandboxConfig).existsSync()
-          unless se or igns
-            notification = atom.notifications.addWarning 'No sandbox found, stopping',
-              dismissable: true
-              detail: 'ide-haskell-cabal did not find sandbox configuration
-                     \nfile. Installing dependencies without sandbox is
-                     \ndangerous and is not recommended. It is suggested to
-                     \ncreate a sandbox right now.'
-            try
-              notificationView = atom.views.getView(notification)
-              notificationContent = notificationView.querySelector('.detail-content')
-              install = document.createElement('button')
-              install.style['margin-top'] = '1em'
-              install.innerText = 'Click here to create sandbox'
-              install.classList.add 'btn', 'btn-warning', 'icon', 'icon-rocket'
-              install.addEventListener 'click', ->
-                notification.dismiss()
-                require('./cabal-process') 'cabal', ['sandbox', 'init'], spawnOpts, opts
-              if notificationContent?
-                notificationContent.appendChild install
-            return {}
-          cabalArgs = ['install', '--only-dependencies']
-      cabalArgs.push '--builddir=' + buildDir
-      cabalArgs.push target.target if target.target? and cmd is 'build'
-      if cmd is 'test'
-        opts.severityChangeRx =
-          test: /Running \d+ test suites\.\.\./
-        opts.severity = 'build'
-        cabalArgs.push '--show-details=always'
-      require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts
-
-    'cabal-nix': ({cmd, opts, target, spawnOpts}) ->
-      # TODOs:
-      #   * Commands other than 'build'
-      #   * Support for buildDir
-      if cmd is 'build'
-        cabalArgs = ['new-build']
-      else
-        atom.notifications.addWarning "Command '#{cmd}' is not implemented for cabal-nix"
-        return {}
-
-      cabalArgs.push target.target if target.target? and cmd is 'build'
-      require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts
-
-    stack: ({cmd, opts, target, spawnOpts}) ->
-      cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') ? []
-      switch cmd
-        when 'deps'
-          cabalArgs.push 'build', '--only-dependencies'
-        else
-          cabalArgs.push cmd
-      comp = target.target
-      if comp?
-        if comp.startsWith 'lib:'
-          comp = 'lib'
-        comp = "#{target.project}:#{comp}"
-        cabalArgs.push comp
-      cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
-      if cmd is 'test'
-        opts.severity = 'build'
-        require('./cabal-process') 'stack', cabalArgs.concat(['--no-run-tests']), spawnOpts, opts
-        .then (res) ->
-          if res.exitCode isnt 0
-            res
-          else
-            opts.severity = 'test'
-            require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts
-      else
-        require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts
-
-  spawnOpts: (cabalRoot) ->
-    # Setup default opts
-    opts =
-      cwd: cabalRoot.getPath()
-      detached: true
-      env: {}
-
-    {delimiter} = require 'path'
-
-    env = {}
-    for k, v of process.env
-      env[k] = v
-
-    if process.platform is 'win32'
-      PATH = []
-      capMask = (str, mask) ->
-        a = str.split ''
-        for c, i in a
-          if mask & Math.pow(2, i)
-            a[i] = a[i].toUpperCase()
-        return a.join ''
-      for m in [0b1111..0]
-        vn = capMask("path", m)
-        if env[vn]?
-          PATH.push env[vn]
-      env.PATH = PATH.join delimiter
-
-    env.PATH ?= ""
-
-    # set PATH depending on config settings
-    ghcPath = @getConfigOpt 'pathTo'
-    if @getConfigOpt 'pathExclusive'
-      env.PATH = ghcPath.join(delimiter)
-    else if ghcPath
-      env.PATH = ghcPath.concat(env.PATH.split(delimiter)).join(delimiter)
-
-    # Set sandbox file (if specified)
-    sandboxConfig = @getConfigOpt 'sandbox'
-    if sandboxConfig != ''
-      env.CABAL_SANDBOX_CONFIG = sandboxConfig
-
-    opts.env = env
-
-    return opts
-
   runCabalCommand: (command, {messageTypes, defaultSeverity, canCancel}) ->
     @upi.clearMessages messageTypes
 
@@ -290,6 +149,7 @@ class IdeBackend
       setCancelAction:
         if canCancel
           (action) =>
+            cancelActionDisp?.dispose?()
             cancelActionDisp = @upi.addPanelControl 'ide-haskell-button',
               classes: ['cancel']
               events:
