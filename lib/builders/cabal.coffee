@@ -7,8 +7,13 @@ class BuilderCabal extends BuilderBase
     spawnOpts = @spawnOpts(cabalRoot)
     cabalArgs = [cmd]
     switch cmd
-      when 'build', 'test'
+      when 'build'
         cabalArgs.push '--only'
+      when 'test'
+        opts.severityChangeRx =
+          test: /Running \d+ test suites\.\.\./
+        opts.severity = 'build'
+        cabalArgs.push '--only', '--show-details=always'
       when 'clean'
         cabalArgs.push '--save-configure'
       when 'deps'
@@ -46,12 +51,7 @@ class BuilderCabal extends BuilderBase
             catch e
               {}
           )
-        cabalArgs = ['install', '--only-dependencies']
+        cabalArgs = ['install', '--only-dependencies', '--enable-tests']
     cabalArgs.push '--builddir=' + @getConfigOpt('buildDir')
     cabalArgs.push target.target if target.target? and cmd is 'build'
-    if cmd is 'test'
-      opts.severityChangeRx =
-        test: /Running \d+ test suites\.\.\./
-      opts.severity = 'build'
-      cabalArgs.push '--show-details=always'
     require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts
