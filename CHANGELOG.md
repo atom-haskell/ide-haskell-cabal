@@ -1,3 +1,17 @@
+## 1.7.0
+* Fix ghc8 warnings
+* Fix LICENSE date
+* Update LICENSE
+* [Cabal] install cabal test dependencies
+* Refactor and some fixes
+* [Cabal] Honor CABAL_SANDBOX_CONFIG when checking
+* [Cabal] clean test split code, progress code
+* [Cabal] Detect build/test by regexp
+* [Stack] build before test
+* Minor fixes
+* Run builder in promise
+* Refactor command code
+
 ## 1.6.4
 * Fix ideBackend disposal, use UPI 0.2.0
 
