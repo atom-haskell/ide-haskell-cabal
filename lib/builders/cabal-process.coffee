@@ -8,7 +8,7 @@ path          = require 'path'
 
 # Regular expression to match against a location in a cabal msg (Foo.hs:3:2)
 # The [^] syntax basically means "anything at all" (including newlines)
-matchLoc = /(\S+):(\d+):(\d+):( Warning:)?\n?([^]*)/
+matchLoc = /(\S+):(\d+):(\d+):( [Ww]arning:)?\n?([^]*)/
 
 # Start of a Cabal message
 startOfMessage = /\n\S/
