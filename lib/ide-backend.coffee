@@ -121,7 +121,7 @@ class IdeBackend
             cabalRoot
           }
         else
-          throw new Error("Unkown builder '#{builder?.name ? builder}'")
+          throw new Error("Unknown builder '#{builder?.name ? builder}'")
       else
         @upi.addMessages [
           message: 'No cabal file found'
