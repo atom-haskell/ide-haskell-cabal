@@ -1,3 +1,6 @@
+## 1.7.1
+* Fix cabal-nix builder (Edsko de Vries)
+
 ## 1.7.0
 * Fix ghc8 warnings
 * Fix LICENSE date
