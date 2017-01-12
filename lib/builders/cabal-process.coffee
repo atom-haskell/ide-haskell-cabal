@@ -2,6 +2,7 @@
 child_process = require 'child_process'
 {kill}        = require 'process'
 path          = require 'path'
+{EOL}         = require 'os'
 
 # Atom dependencies
 {Directory, Point} = require 'atom'
@@ -75,16 +76,10 @@ class CabalProcess
     msgs.filter (msg) -> msg?
 
   unindentMessage: (message) ->
-    lines = message.split('\n')
-    minIndent = null
-    for line in lines
-      match = line.match /^[\t\s]*/
-      lineIndent = match[0].length
-      minIndent = lineIndent if lineIndent < minIndent or not minIndent?
-    if minIndent?
-      lines = for line in lines
-        line.slice(minIndent)
-    lines.join('\n')
+    lines = message.split(EOL)
+    minIndent = Math.min((lines.map (line) -> line.match(/^[\t\s]*/)[0].length)...)
+    lines.map (line) -> line.slice(minIndent)
+    .join('\n')
 
 
   parseMessage: (raw) ->
