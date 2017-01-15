@@ -1,6 +1,9 @@
 ## 1.7.3
 * Ide-haskell param icons
 
+## 1.7.2
+* Rewrite `unindentMessage`, use os-specific EOL
+
 ## 1.7.1
 * Fix cabal-nix builder (Edsko de Vries)
 
