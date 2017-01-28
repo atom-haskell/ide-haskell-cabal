@@ -7,76 +7,67 @@ path          = require 'path'
 # Atom dependencies
 {Directory, Point} = require 'atom'
 
-# Regular expression to match against a location in a cabal msg (Foo.hs:3:2)
-# The [^] syntax basically means "anything at all" (including newlines)
-matchLoc = /(\S+):(\d+):(\d+):( [Ww]arning:)?\n?([^]*)/
-
-# Start of a Cabal message
-startOfMessage = /\n\S/
-
 class CabalProcess
   # Spawn a process and log all messages
   constructor: (command, args, options, {onMsg, @onProgress, onDone, setCancelAction, @severity, @severityChangeRx}) ->
     @cwd = new Directory options.cwd
     @running = true
+    # cabal returns failure when there are type errors _or_ when it can't
+    # compile the code at all (i.e., when there are missing dependencies).
+    # Since it's hard to distinguish between these two, we look at the
+    # parsed errors;
+    # @hasError is set if we find an error/warning, see parseMessage
+    @hasError = false
     proc = child_process.spawn command, args, options
+
+    buffered = (handleOutput) ->
+      buffer = ''
+      (data) ->
+        output = data.toString('utf8')
+        [first, mid..., last] = output.split(EOL)
+        # ^ The only place where we get os-specific EOL (CR/CRLF/LF)
+        # in the rest of the code we're using just LF (\n)
+        buffer += first
+        if last? # it means there's at least one newline
+          lines = [buffer, mid...]
+          buffer = last
+          handleOutput lines
+
+    blockBuffered = (handleOutput) ->
+      # Start of a Cabal message
+      startOfMessage = /\n(?=\S)/g
+      buffer = []
+      proc.on 'close', -> handleOutput(buffer.join('\n'))
+      buffered (lines) ->
+        buffer.push(lines...)
+        # Could iterate over lines here, but this is easier, if not as effective
+        [first, mid..., last] = buffer.join('\n').split(startOfMessage)
+        buffer = last?.split?('\n') ? []
+        for block in [first, mid...]
+          handleOutput block
 
     setCancelAction? ->
       try kill -proc.pid
       try kill proc.pid
       try proc.kill()
 
-    proc.stdout.on 'data', (data) =>
-      @checkProgress(data.toString())
-      @checkSeverityChange(data.toString())
-      onMsg? [
-        message: data.toString()
-        severity: @severity
-      ]
+    handleMessage = (msg) =>
+      @checkProgress msg
+      @checkSeverityChange msg
+      parsed = @parseMessage(msg)
+      if parsed? and onMsg?
+        onMsg parsed
 
-    # We collect stderr from the process as it comes in and split it into
-    # individual errors/warnings. We also keep the unparsed error messages
-    # to show in case of a cabal failure.
-    @errBuffer = ""
-    @rawErrors = ""
-
-    hasError = false
-
-    proc.stderr.on 'data', (data) =>
-      @errBuffer += data.toString()
-      @checkSeverityChange(data.toString())
-      @checkProgress(data.toString())
-      msgs = @splitErrBuffer false
-      for msg in msgs
-        continue unless msg?
-        if msg.uri?
-          hasError = true
-      onMsg? msgs
+    # Note: blockBuffered used twice because we need separate buffers
+    # for stderr and stdout
+    proc.stdout.on 'data', blockBuffered handleMessage
+    proc.stderr.on 'data', blockBuffered handleMessage
 
     proc.on 'close', (exitCode, signal) =>
-      msgs = @splitErrBuffer true
-      for msg in msgs
-        if msg.uri?
-          hasError = true
-      onMsg? msgs
-      onDone? {exitCode, hasError}
+      onDone? {exitCode, @hasError}
       @running = false
 
-  # Split the error buffer we have so far into messages
-  splitErrBuffer: (isEOF) ->
-    som = @errBuffer.search startOfMessage
-    msgs = while som >= 0
-      errMsg     = @errBuffer.substr(0, som + 1)
-      @errBuffer = @errBuffer.substr(som + 1)
-      som        = @errBuffer.search startOfMessage
-      @parseMessage errMsg
-    if isEOF
-      # Try to parse whatever is left in the buffer
-      msgs.push @parseMessage @errBuffer
-    msgs.filter (msg) -> msg?
-
-  unindentMessage: (message) ->
-    lines = message.split(EOL)
+  unindentMessage: (lines) ->
     minIndent = Math.min((lines.map (line) -> line.match(/^[\t\s]*/)[0].length)...)
     lines.map (line) -> line.slice(minIndent)
     .join('\n')
@@ -84,10 +75,14 @@ class CabalProcess
 
   parseMessage: (raw) ->
     if raw.trim() != ""
-      matched = raw.match(matchLoc)
+      [first, rest...] = raw.trimRight().split('\n')
+      matchLoc = /^(.+):(\d+):(\d+):(?: (\w+):)?\s*(\[[^\]]+\])?/
+      matched = first.match(matchLoc)
       if matched?
-        [file, line, col, rawTyp, msg] = matched.slice(1, 6)
-        typ = if rawTyp? then "warning" else "error"
+        @hasError = true
+
+        [file, line, col, rawTyp, context, msg] = matched.slice(1, 7)
+        typ = rawTyp?.toLowerCase?() ? 'error'
 
         uri:
           if path.isAbsolute(file)
@@ -95,8 +90,9 @@ class CabalProcess
           else
             @cwd.getFile(file).getPath()
         position: new Point parseInt(line) - 1, parseInt(col) - 1
+        context: context
         message:
-          text: @unindentMessage(msg.trimRight())
+          text: @unindentMessage(rest)
           highlighter: 'hint.message.haskell'
         severity: typ
       else

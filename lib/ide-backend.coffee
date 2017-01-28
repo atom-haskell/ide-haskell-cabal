@@ -156,8 +156,9 @@ class IdeBackend
                 click: ->
                   action()
               before: '#progressBar'
-      onMsg: (messages) =>
-        @upi.addMessages messages.filter ({severity}) -> severity in messageTypes
+      onMsg: (message) =>
+        if message.severity in messageTypes
+          @upi.addMessages [message]
       onProgress:
         if canCancel
           (progress) =>
@@ -165,13 +166,7 @@ class IdeBackend
     .then ({exitCode, hasError}) =>
       cancelActionDisp?.dispose?()
       @upi.setStatus status: 'ready'
-      # cabal returns failure when there are type errors _or_ when it can't
-      # compile the code at all (i.e., when there are missing dependencies).
-      # Since it's hard to distinguish between these days, we look at the
-      # parsed errors; if there are any, we assume that it at least managed to
-      # start compiling (all dependencies available) and so we ignore the
-      # exit code and just report the errors. Otherwise, we show an atom error
-      # with the raw stderr output from cabal.
+      # see CabalProcess for explaination
       if exitCode != 0
         if hasError
           @upi.setStatus status: 'warning'
