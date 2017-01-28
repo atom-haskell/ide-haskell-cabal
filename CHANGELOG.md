@@ -1,3 +1,7 @@
+## 1.7.4
+* s rx class matches t as well...
+* Updates to cabal output processing
+
 ## 1.7.3
 * Ide-haskell param icons
 
