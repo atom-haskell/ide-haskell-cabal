@@ -68,7 +68,7 @@ class CabalProcess
       @running = false
 
   unindentMessage: (lines) ->
-    minIndent = Math.min((lines.map (line) -> line.match(/^[\t\s]*/)[0].length)...)
+    minIndent = Math.min((lines.map (line) -> line.match(/^\s*/)[0].length)...)
     lines.map (line) -> line.slice(minIndent)
     .join('\n')
 
