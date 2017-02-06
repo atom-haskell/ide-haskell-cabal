@@ -1,3 +1,6 @@
+## 1.7.5
+* Fix #16
+
 ## 1.7.4
 * s rx class matches t as well...
 * Updates to cabal output processing
