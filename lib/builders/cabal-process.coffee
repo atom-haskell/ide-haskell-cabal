@@ -42,9 +42,10 @@ class CabalProcess
         buffer.push(lines...)
         # Could iterate over lines here, but this is easier, if not as effective
         [first, mid..., last] = buffer.join('\n').split(startOfMessage)
-        buffer = last?.split?('\n') ? []
-        for block in [first, mid...]
-          handleOutput block
+        if last?
+          buffer = last.split('\n')
+          for block in [first, mid...]
+            handleOutput block
 
     setCancelAction? ->
       try kill -proc.pid
