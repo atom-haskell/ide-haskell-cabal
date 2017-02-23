@@ -89,6 +89,14 @@ class IdeBackend
     else
       atom.project.getPaths()[0] ? process.cwd()
 
+  getActiveProjectTarget: (cabalfile, cabalRoot) ->
+    editor = atom.workspace.getActiveTextEditor()
+    if editor?.getPath?()?
+      new Promise (resolve) ->
+        Util.getComponentFromFile cabalfile, cabalRoot.relativize(editor.getPath()), resolve
+    else
+      Promise.resolve([])
+
   cabalBuild: (cmd, opts) =>
     # It shouldn't be possible to call this function until cabalProcess
     # exits. Otherwise, problems will ensue.
@@ -112,14 +120,30 @@ class IdeBackend
           file.isFile() and file.getBaseName().endsWith '.cabal'
 
       if cabalFile?
+        unless target.target?
+          cabalContents = cabalFile.readSync()
+          target =
+            @getActiveProjectTarget cabalContents, cabalRoot
+            .then (tgts) ->
+              [tgt] = tgts
+              if tgt?
+                new Promise (resolve) -> Util.parseDotCabal cabalContents, resolve
+                .then (cf) ->
+                  project: cf.name
+                  target: tgt
+                  dir: cabalRoot
+              else
+                {}
         builder = try require "./builders/#{builder.name}"
         if builder?
-          (new builder).build {
-            cmd
-            opts
-            target
-            cabalRoot
-          }
+          Promise.resolve(target)
+          .then (target) ->
+            (new builder).build {
+              cmd
+              opts
+              target
+              cabalRoot
+            }
         else
           throw new Error("Unknown builder '#{builder?.name ? builder}'")
       else
