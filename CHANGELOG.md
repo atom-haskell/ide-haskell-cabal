@@ -1,3 +1,6 @@
+## 1.8.0
+* Determine target from currently open file
+
 ## 1.7.5
 * Fix #16
 
