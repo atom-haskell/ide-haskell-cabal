@@ -1,3 +1,6 @@
+## 1.8.1
+* Do not try to auto-detect target for test\/clean commands
+
 ## 1.8.0
 * Determine target from currently open file
 
