@@ -120,7 +120,7 @@ class IdeBackend
           file.isFile() and file.getBaseName().endsWith '.cabal'
 
       if cabalFile?
-        unless target.target?
+        if not target.target? and cmd in ['build', 'deps']
           cabalContents = cabalFile.readSync()
           target =
             @getActiveProjectTarget cabalContents, cabalRoot
