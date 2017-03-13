@@ -1,3 +1,7 @@
+## 1.9.0
+* Update README
+* Add bench command
+
 ## 1.8.1
 * Do not try to auto-detect target for test\/clean commands
 
