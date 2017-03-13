@@ -10,8 +10,13 @@ class BuilderCabal extends BuilderBase
       when 'build'
         cabalArgs.push '--only'
       when 'test'
-        opts.severityChangeRx =
-          test: /Running \d+ test suites\.\.\./
+        opts.severityChangeRx = {}
+        opts.severityChangeRx[opts.severity] = /Running \d+ test suites\.\.\./
+        opts.severity = 'build'
+        cabalArgs.push '--only', '--show-details=always'
+      when 'bench'
+        opts.severityChangeRx = {}
+        opts.severityChangeRx[opts.severity] =  /Running \d+ benchmarks\.\.\./
         opts.severity = 'build'
         cabalArgs.push '--only', '--show-details=always'
       when 'clean'
@@ -51,7 +56,7 @@ class BuilderCabal extends BuilderBase
             catch e
               {}
           )
-        cabalArgs = ['install', '--only-dependencies', '--enable-tests']
+        cabalArgs = ['install', '--only-dependencies', '--enable-tests', '--enable-benchmarks']
     cabalArgs.push '--builddir=' + @getConfigOpt('buildDir')
     cabalArgs.push target.target if target.target? and cmd is 'build'
     require('./cabal-process') 'cabal', cabalArgs, spawnOpts, opts

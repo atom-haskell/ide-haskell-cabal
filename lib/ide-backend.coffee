@@ -217,6 +217,12 @@ class IdeBackend
       defaultSeverity: 'test'
       canCancel: true
 
+  bench: ->
+    @runCabalCommand 'bench',
+      messageTypes: ['error', 'warning', 'build', 'test']
+      defaultSeverity: 'test'
+      canCancel: true
+
   dependencies: ->
     @runCabalCommand 'deps',
       messageTypes: ['build']

@@ -18,14 +18,18 @@ class BuilderCabal extends BuilderBase
       comp = "#{target.project}:#{comp}"
       cabalArgs.push comp
     cabalArgs.push (atom.config.get("ide-haskell-cabal.stack.#{cmd}Arguments") ? [])...
-    if cmd is 'test'
+    if cmd in ['test', 'bench']
+      oldSeverity = opts.severity
       opts.severity = 'build'
-      require('./cabal-process') 'stack', cabalArgs.concat(['--no-run-tests']), spawnOpts, opts
+      noRunArg =
+        test: '--no-run-tests'
+        bench: '--no-run-benchmarks'
+      require('./cabal-process') 'stack', cabalArgs.concat([noRunArg[cmd]]), spawnOpts, opts
       .then (res) ->
         if res.exitCode isnt 0
           res
         else
-          opts.severity = 'test'
+          opts.severity = oldSeverity
           require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts
     else
       require('./cabal-process') 'stack', cabalArgs, spawnOpts, opts

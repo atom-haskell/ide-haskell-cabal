@@ -61,6 +61,8 @@ module.exports = IdeHaskellCabal =
         backend.clean()
       'ide-haskell-cabal:test': ->
         backend.test()
+      'ide-haskell-cabal:bench': ->
+        backend.bench()
       'ide-haskell-cabal:build-dependencies': ->
         backend.dependencies()
       'ide-haskell-cabal:set-build-target': ->
@@ -72,6 +74,7 @@ module.exports = IdeHaskellCabal =
         {label: 'Build Project', command: 'ide-haskell-cabal:build'}
         {label: 'Clean Project', command: 'ide-haskell-cabal:clean'}
         {label: 'Test', command: 'ide-haskell-cabal:test'}
+        {label: 'Bench', command: 'ide-haskell-cabal:bench'}
         {label: 'Build Dependencies', command: 'ide-haskell-cabal:build-dependencies'}
         {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'}
       ]
@@ -106,6 +109,11 @@ module.exports = IdeHaskellCabal =
         testArguments:
           type: 'array'
           description: 'Stack test command arguments (comma-separated)'
+          default: []
+          order: 30
+        benchArguments:
+          type: 'array'
+          description: 'Stack bench command arguments (comma-separated)'
           default: []
           order: 30
     cabal:
