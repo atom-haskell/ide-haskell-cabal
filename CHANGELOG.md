@@ -1,3 +1,6 @@
+## 1.9.1
+* Fix parsing of one-line messages
+
 ## 1.9.0
 * Update README
 * Add bench command
