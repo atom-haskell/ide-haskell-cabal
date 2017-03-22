@@ -1,3 +1,6 @@
+## 1.9.2
+* Fix extra newline in errors
+
 ## 1.9.1
 * Fix parsing of one-line messages
 
