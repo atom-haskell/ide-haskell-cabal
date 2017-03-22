@@ -76,7 +76,7 @@ class CabalProcess
 
   parseMessage: (raw) ->
     if raw.trim() != ""
-      matchLoc = /^(.+):(\d+):(\d+):(?: (\w+):)?[ \t]*(\[[^\]]+\])?([^]*)/
+      matchLoc = /^(.+):(\d+):(\d+):(?: (\w+):)?[ \t]*(\[[^\]]+\])?[ \t]*\n?([^]*)/
       matched = raw.trimRight().match(matchLoc)
       if matched?
         @hasError = true
