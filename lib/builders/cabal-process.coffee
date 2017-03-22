@@ -76,13 +76,12 @@ class CabalProcess
 
   parseMessage: (raw) ->
     if raw.trim() != ""
-      [first, rest...] = raw.trimRight().split('\n')
-      matchLoc = /^(.+):(\d+):(\d+):(?: (\w+):)?\s*(\[[^\]]+\])?/
-      matched = first.match(matchLoc)
+      matchLoc = /^(.+):(\d+):(\d+):(?: (\w+):)?[ \t]*(\[[^\]]+\])?([^]*)/
+      matched = raw.trimRight().match(matchLoc)
       if matched?
         @hasError = true
 
-        [file, line, col, rawTyp, context, msg] = matched.slice(1, 7)
+        [file, line, col, rawTyp, context, msg] = matched.slice(1)
         typ = rawTyp?.toLowerCase?() ? 'error'
 
         uri:
@@ -93,7 +92,7 @@ class CabalProcess
         position: new Point parseInt(line) - 1, parseInt(col) - 1
         context: context
         message:
-          text: @unindentMessage(rest)
+          text: @unindentMessage(msg.split('\n'))
           highlighter: 'hint.message.haskell'
         severity: typ
       else
