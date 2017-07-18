@@ -201,9 +201,10 @@ export class IdeBackend {
     }
   }
 
-  private async cabalBuild (cmd: CabalCommand, opts: Builders.IParams): Promise<{exitCode: number, hasError: boolean}> {
+  private async cabalBuild (cmd: CabalCommand, opts: Builders.IParams): Promise<void> {
       // It shouldn't be possible to call this function until cabalProcess
       // exits. Otherwise, problems will ensue.
+    let res
     try {
       if (this.running) { throw new Error('Already running') }
       this.running = true
@@ -259,14 +260,26 @@ export class IdeBackend {
         'none': Builders.None
       }
       const builder = builders[builderParam.name]
-      return (new builder({opts, target, cabalRoot})).runCommand(cmd)
+
+      res = await (new builder({opts, target, cabalRoot})).runCommand(cmd)
+      // see CabalProcess for explaination
+      if (res.exitCode !== 0) {
+        if (res.hasError) {
+          this.upi.setStatus({status: 'warning', detail: 'There were build errors'})
+        } else {
+          this.upi.setStatus({status: 'error', detail: 'There was a builder error'})
+        }
+      } else {
+        this.upi.setStatus({status: 'ready', detail: 'Build was successful'})
+      }
     } catch (error) {
       if (error) {
         // tslint:disable-next-line: no-console
         console.error(error)
-        atom.notifications.addFatalError(error.toString(), { detail: error, dismissable: true })
+        this.upi.setStatus({status: 'error', detail: error.toString()})
+      } else {
+        this.upi.setStatus({status: 'warning', detail: 'Build failed with no errors'})
       }
-      return { exitCode: -127, hasError: false }
     } finally {
       this.running = false
     }
@@ -276,50 +289,40 @@ export class IdeBackend {
     command: CabalCommand,
     {messageTypes, defaultSeverity, canCancel}:
       {messageTypes: UPI.TSeverity[], defaultSeverity: UPI.TSeverity, canCancel: boolean}
-  ) {
+  ): Promise<void> {
     const messages: UPI.IResultItem[] = []
     this.upi.setMessages(messages)
 
     let cancelActionDisp: AtomTypes.Disposable | undefined
-    const {exitCode, hasError} =
-      await this.cabalBuild(command, {
-        severity: defaultSeverity,
-        setCancelAction:
-            canCancel ?
-            (action: () => void) => {
-              cancelActionDisp && cancelActionDisp.dispose()
-              cancelActionDisp = this.upi.addPanelControl({
-                element: 'ide-haskell-button',
-                opts: {
-                  classes: ['cancel'],
-                  events: {
-                    click: action
-                  },
-                  before: '#progressBar'
-                }
-              })
-            } : undefined,
-        onMsg: (message: UPI.IResultItem) => {
-          if (messageTypes.includes(message.severity)) {
-            messages.push(message)
-            this.upi.setMessages(messages)
-          }
-        },
-        onProgress:
-          canCancel
-          ? (progress: number) => this.upi.setStatus({status: 'progress', progress, detail: ''})
-          : undefined
-        })
 
+    await this.cabalBuild(command, {
+      severity: defaultSeverity,
+      setCancelAction:
+          canCancel ?
+          (action: () => void) => {
+            cancelActionDisp && cancelActionDisp.dispose()
+            cancelActionDisp = this.upi.addPanelControl({
+              element: 'ide-haskell-button',
+              opts: {
+                classes: ['cancel'],
+                events: {
+                  click: action
+                },
+                before: '#progressBar'
+              }
+            })
+          } : undefined,
+      onMsg: (message: UPI.IResultItem) => {
+        if (messageTypes.includes(message.severity)) {
+          messages.push(message)
+          this.upi.setMessages(messages)
+        }
+      },
+      onProgress:
+        canCancel
+        ? (progress: number) => this.upi.setStatus({status: 'progress', progress, detail: ''})
+        : undefined
+    })
     cancelActionDisp && cancelActionDisp.dispose()
-    this.upi.setStatus({status: 'ready', detail: ''})
-    // see CabalProcess for explaination
-    if (exitCode !== 0) {
-      if (hasError) {
-        this.upi.setStatus({status: 'warning', detail: ''})
-      } else {
-        this.upi.setStatus({status: 'error', detail: ''})
-      }
-    }
   }
 }
