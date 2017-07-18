@@ -307,8 +307,7 @@ export class IdeBackend {
                 classes: ['cancel'],
                 events: {
                   click: action
-                },
-                before: '#progressBar'
+                }
               }
             })
           } : undefined,
