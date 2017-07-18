@@ -202,8 +202,6 @@ export class IdeBackend {
   }
 
   private async cabalBuild (cmd: CabalCommand, opts: Builders.IParams): Promise<void> {
-      // It shouldn't be possible to call this function until cabalProcess
-      // exits. Otherwise, problems will ensue.
     let res
     try {
       if (this.running) { throw new Error('Already running') }
@@ -245,14 +243,9 @@ export class IdeBackend {
           }
         }
       }
-      // try {
-      //
-      // } catch (e) {
-      //   throw new Error(`Unknown builder '${(builderParam && builderParam.name) || builderParam}'`)
-      // }
       const builders: {
         [k: string]:
-          typeof Builders.CabalNix | typeof Builders.Cabal | typeof Builders.Stack | typeof Builders.None
+          typeof Builders.CabalNix | typeof Builders.Cabal | typeof Builders.Stack | typeof Builders.None | undefined
       } = {
         'cabal-nix': Builders.CabalNix,
         'cabal': Builders.Cabal,
@@ -261,13 +254,20 @@ export class IdeBackend {
       }
       const builder = builders[builderParam.name]
 
+      if (builder === undefined) {
+        throw new Error(`Unknown builder '${(builderParam && builderParam.name) || builderParam}'`)
+      }
+
       res = await (new builder({opts, target, cabalRoot})).runCommand(cmd)
       // see CabalProcess for explaination
       if (res.exitCode !== 0) {
         if (res.hasError) {
-          this.upi.setStatus({status: 'warning', detail: 'There were build errors'})
+          this.upi.setStatus({status: 'warning', detail: 'There were errors in source files'})
         } else {
-          this.upi.setStatus({status: 'error', detail: 'There was a builder error'})
+          this.upi.setStatus({
+            status: 'error',
+            detail: `Builder quit abnormally with exit code ${res.exitCode}`
+          })
         }
       } else {
         this.upi.setStatus({status: 'ready', detail: 'Build was successful'})
