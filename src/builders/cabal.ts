@@ -73,7 +73,7 @@ export class Builder extends BuilderBase {
     return runCabalProcess('cabal', ['sandbox', 'init'], this.spawnOpts, this.opts.opts)
   }
 
-  private async commonBuild (): Promise<{exitCode: number, hasError: boolean}> {
+  private async commonBuild () {
     this.cabalArgs.push('--builddir=' + this.getConfigOpt('buildDir'))
     return this.runCabal()
   }

@@ -11,6 +11,11 @@ export interface CtorOpts {
   cabalRoot: AtomTypes.Directory
 }
 
+export interface ResultType {
+  exitCode: number | null
+  hasError: boolean
+}
+
 export abstract class BuilderBase {
   protected cabalArgs: string[]
   protected spawnOpts: {cwd: string, detached: boolean, env: { [key: string]: string | undefined }}
@@ -23,19 +28,19 @@ export abstract class BuilderBase {
     this.cabalArgs = []
   }
 
-  public async runCommand (cmd: CabalCommand): Promise<{exitCode: number, hasError: boolean}> {
+  public async runCommand (cmd: CabalCommand): Promise<ResultType> {
     return this[cmd]()
   }
 
-  protected async runCabal (extraArgs: string[] = []): Promise<{exitCode: number, hasError: boolean}> {
+  protected async runCabal (extraArgs: string[] = []): Promise<ResultType> {
     return runCabalProcess(this.processName, this.cabalArgs.concat(extraArgs), this.spawnOpts, this.opts.opts)
   }
 
-  protected abstract build (): Promise<{exitCode: number, hasError: boolean}>
-  protected abstract test (): Promise<{exitCode: number, hasError: boolean}>
-  protected abstract bench (): Promise<{exitCode: number, hasError: boolean}>
-  protected abstract clean (): Promise<{exitCode: number, hasError: boolean}>
-  protected abstract deps (): Promise<{exitCode: number, hasError: boolean}>
+  protected abstract build (): Promise<ResultType>
+  protected abstract test (): Promise<ResultType>
+  protected abstract bench (): Promise<ResultType>
+  protected abstract clean (): Promise<ResultType>
+  protected abstract deps (): Promise<ResultType>
 
   protected getConfigOpt (opt: string) {
     const map = {

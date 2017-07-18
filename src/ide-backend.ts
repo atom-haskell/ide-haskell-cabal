@@ -260,7 +260,10 @@ export class IdeBackend {
 
       res = await (new builder({opts, target, cabalRoot})).runCommand(cmd)
       // see CabalProcess for explaination
-      if (res.exitCode !== 0) {
+      // tslint:disable-next-line: no-null-keyword
+      if (res.exitCode === null) { // this means process was killed
+        this.upi.setStatus({status: 'warning', detail: 'Build was interrupted'})
+      } else if (res.exitCode !== 0) {
         if (res.hasError) {
           this.upi.setStatus({status: 'warning', detail: 'There were errors in source files'})
         } else {
