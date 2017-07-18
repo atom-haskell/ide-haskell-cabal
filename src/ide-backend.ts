@@ -202,9 +202,11 @@ export class IdeBackend {
   }
 
   private async cabalBuild (cmd: CabalCommand, opts: Builders.IParams): Promise<void> {
-    let res
     try {
-      if (this.running) { throw new Error('Already running') }
+      if (this.running) {
+        this.upi.setStatus({status: 'warning', detail: 'Builder already running'})
+        return
+      }
       this.running = true
 
       const builderParam = await this.upi.getConfigParam<BuilderParamType>('builder')
@@ -258,7 +260,7 @@ export class IdeBackend {
         throw new Error(`Unknown builder '${(builderParam && builderParam.name) || builderParam}'`)
       }
 
-      res = await (new builder({opts, target, cabalRoot})).runCommand(cmd)
+      const res = await (new builder({opts, target, cabalRoot})).runCommand(cmd)
       // see CabalProcess for explaination
       // tslint:disable-next-line: no-null-keyword
       if (res.exitCode === null) { // this means process was killed
@@ -283,9 +285,8 @@ export class IdeBackend {
       } else {
         this.upi.setStatus({status: 'warning', detail: 'Build failed with no errors'})
       }
-    } finally {
-      this.running = false
     }
+    this.running = false
   }
 
   private async runCabalCommand (
