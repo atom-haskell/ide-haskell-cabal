@@ -51,6 +51,7 @@ export class Builder extends BuilderBase {
               text: 'Click here to create the sandbox',
               onDidClick: () => {
                 resolve(this.createSandbox())
+                notification.dismiss()
               }
             }
           ]
