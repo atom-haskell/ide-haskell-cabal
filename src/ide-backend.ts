@@ -323,7 +323,7 @@ export class IdeBackend {
       },
       onProgress:
         canCancel
-        ? (progress: number) => this.upi.setStatus({status: 'progress', progress, detail: ''})
+        ? (progress: number) => this.upi.setStatus({status: 'progress', progress, detail: `${command} in progress`})
         : undefined
     })
     cancelActionDisp && cancelActionDisp.dispose()
