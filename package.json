@@ -16,7 +16,7 @@
     "language-haskell:grammar-used"
   ],
   "engines": {
-    "atom": ">=1.0.0 <2.0.0"
+    "atom": ">=1.17.0 <2.0.0"
   },
   "dependencies": {
     "atom-haskell-utils": "^1.0.0"
