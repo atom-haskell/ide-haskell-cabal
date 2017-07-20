@@ -1,5 +1,7 @@
 # ide-haskell-cabal package
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/atom-haskell/ide-haskell-cabal.svg)](https://greenkeeper.io/)
+
 The `ide-haskell-cabal` package provides a build backend for `ide-haskell`
 package based on `cabal` or `stack`.
 
