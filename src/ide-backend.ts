@@ -11,10 +11,60 @@ function isCabalFile (file?: AtomTypes.File | AtomTypes.Directory): file is Atom
   return !!(file && file.isFile() && file.getBaseName().endsWith('.cabal'))
 }
 
+interface ICommandOptions {
+  messageTypes: UPI.TSeverity[]
+  defaultSeverity: UPI.TSeverity
+  canCancel: boolean
+}
+
+const commandOptions: {[K in CabalCommand]: ICommandOptions} = {
+  'build': {
+    messageTypes: ['error', 'warning', 'build'],
+    defaultSeverity: 'build',
+    canCancel: true,
+  },
+  'clean': {
+    messageTypes: ['build'],
+    defaultSeverity: 'build',
+    canCancel: false,
+  },
+  'test': {
+    messageTypes: ['error', 'warning', 'build', 'test'],
+    defaultSeverity: 'test',
+    canCancel: true,
+  },
+  'bench': {
+    messageTypes: ['error', 'warning', 'build', 'test'],
+    defaultSeverity: 'test',
+    canCancel: true,
+  },
+  'build-dependencies': {
+    messageTypes: ['build'],
+    defaultSeverity: 'build',
+    canCancel: true,
+  },
+}
+
 export class IdeBackend {
   private disposables: CompositeDisposable
   private upi: UPI.IUPIInstance
   private running: boolean = false
+  private commands = {
+    ...this.cabalCommands(),
+    'ide-haskell-cabal:set-build-target': async () =>
+      this.upi.setConfigParam('target'),
+    'ide-haskell-cabal:set-active-builder': async () =>
+      this.upi.setConfigParam('builder'),
+    }
+  private menu = [
+    {label: 'Build Project', command: 'ide-haskell-cabal:build'},
+    {label: 'Clean Project', command: 'ide-haskell-cabal:clean'},
+    {label: 'Test', command: 'ide-haskell-cabal:test'},
+    {label: 'Bench', command: 'ide-haskell-cabal:bench'},
+    {label: 'Build Dependencies', command: 'ide-haskell-cabal:build-dependencies'},
+    {label: 'Set Active Builder', command: 'ide-haskell-cabal:set-active-builder'},
+    {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'},
+  ]
   constructor (reg: UPI.IUPIRegistration) {
     this.upi = reg({
       name: 'ide-haskell-cabal',
@@ -32,14 +82,7 @@ export class IdeBackend {
       },
       menu: {
         label: 'Builder',
-        menu: [
-          {label: 'Build Project', command: 'ide-haskell-cabal:build'},
-          {label: 'Clean Project', command: 'ide-haskell-cabal:clean'},
-          {label: 'Test', command: 'ide-haskell-cabal:test'},
-          {label: 'Bench', command: 'ide-haskell-cabal:bench'},
-          {label: 'Build Dependencies', command: 'ide-haskell-cabal:build-dependencies'},
-          {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'},
-        ]
+        menu: this.menu,
       },
       params: {
         builder: this.builderParamInfo(),
@@ -49,23 +92,7 @@ export class IdeBackend {
 
     this.disposables = new CompositeDisposable()
 
-    this.disposables.add(atom.commands.add('atom-workspace', {
-      'ide-haskell-cabal:build': () =>
-        this.build(),
-      'ide-haskell-cabal:clean': () =>
-        this.clean(),
-      'ide-haskell-cabal:test': () =>
-        this.test(),
-      'ide-haskell-cabal:bench': () =>
-        this.bench(),
-      'ide-haskell-cabal:build-dependencies': () =>
-        this.dependencies(),
-      'ide-haskell-cabal:set-build-target': async () =>
-        this.upi.setConfigParam('target'),
-      'ide-haskell-cabal:set-active-builder': async () =>
-        this.upi.setConfigParam('builder'),
-      })
-    )
+    this.disposables.add(atom.commands.add('atom-workspace', this.commands))
     this.disposables.add(this.upi)
   }
 
@@ -73,44 +100,13 @@ export class IdeBackend {
     this.disposables.dispose()
   }
 
-  public build () {
-    this.runCabalCommand('build', {
-      messageTypes: ['error', 'warning', 'build'],
-      defaultSeverity: 'build',
-      canCancel: true,
-    })
-  }
-
-  public clean () {
-    this.runCabalCommand('clean', {
-      messageTypes: ['build'],
-      defaultSeverity: 'build',
-      canCancel: false,
-    })
-  }
-
-  public test () {
-    this.runCabalCommand('test', {
-      messageTypes: ['error', 'warning', 'build', 'test'],
-      defaultSeverity: 'test',
-      canCancel: true,
-    })
-  }
-
-  public bench () {
-    this.runCabalCommand('bench', {
-      messageTypes: ['error', 'warning', 'build', 'test'],
-      defaultSeverity: 'test',
-      canCancel: true,
-    })
-  }
-
-  public dependencies () {
-    this.runCabalCommand('deps', {
-      messageTypes: ['build'],
-      defaultSeverity: 'build',
-      canCancel: true,
-    })
+  private cabalCommands () {
+    const ret = {}
+    for (const cmd of Object.keys(commandOptions)) {
+      ret[`ide-haskell-cabal:${cmd}`] = async () =>
+        this.runCabalCommand(cmd)
+    }
+    return ret
   }
 
   private builderParamInfo (): UPI.IParamSpec<BuilderParamType> {
@@ -229,7 +225,7 @@ export class IdeBackend {
 
       let newTarget = {...target}
 
-      if (! newTarget.target && ['build', 'deps'].includes(cmd)) {
+      if (! newTarget.target && ['build', 'build-dependencies'].includes(cmd)) {
         const cabalContents = await cabalFile.read()
         const tgts = await this.getActiveProjectTarget(cabalContents, cabalRoot)
         const [tgt] = tgts
@@ -289,11 +285,8 @@ export class IdeBackend {
     this.running = false
   }
 
-  private async runCabalCommand (
-    command: CabalCommand,
-    {messageTypes, defaultSeverity, canCancel}:
-      {messageTypes: UPI.TSeverity[], defaultSeverity: UPI.TSeverity, canCancel: boolean}
-  ): Promise<void> {
+  private async runCabalCommand (command: CabalCommand): Promise<void> {
+    const {messageTypes, defaultSeverity, canCancel} = commandOptions[command]
     const messages: UPI.IResultItem[] = []
     this.upi.setMessages(messages)
 

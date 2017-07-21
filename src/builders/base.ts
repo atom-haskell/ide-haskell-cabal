@@ -6,7 +6,7 @@ import {runCabalProcess, IParams} from './cabal-process'
 export {IParams}
 
 export interface CtorOpts {
-  opts: any,
+  opts: IParams,
   target: TargetParamType,
   cabalRoot: AtomTypes.Directory
 }

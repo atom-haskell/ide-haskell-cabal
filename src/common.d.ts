@@ -6,4 +6,4 @@ export interface TargetParamType {
   dir: string | undefined
   component: string | undefined
 }
-export type CabalCommand = 'build' | 'clean' | 'test' | 'bench' | 'deps'
+export type CabalCommand = 'build' | 'clean' | 'test' | 'bench' | 'build-dependencies'

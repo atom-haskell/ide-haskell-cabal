@@ -12,7 +12,7 @@ export interface IParams {
   onDone?: (done: {exitCode: number, hasError: boolean}) => void
   setCancelAction?: (action: () => void) => void
   severity: UPI.TSeverity
-  severityChangeRx?: RegExp
+  severityChangeRx?: { [K in UPI.TSeverity]: RegExp }
 }
 
 class CabalProcess {
