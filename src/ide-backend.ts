@@ -18,27 +18,27 @@ interface ICommandOptions {
 }
 
 const commandOptions: {[K in CabalCommand]: ICommandOptions} = {
-  'build': {
+  build: {
     messageTypes: ['error', 'warning', 'build'],
     defaultSeverity: 'build',
     canCancel: true,
   },
-  'clean': {
+  clean: {
     messageTypes: ['build'],
     defaultSeverity: 'build',
     canCancel: false,
   },
-  'test': {
+  test: {
     messageTypes: ['error', 'warning', 'build', 'test'],
     defaultSeverity: 'test',
     canCancel: true,
   },
-  'bench': {
+  bench: {
     messageTypes: ['error', 'warning', 'build', 'test'],
     defaultSeverity: 'test',
     canCancel: true,
   },
-  'build-dependencies': {
+  deps: {
     messageTypes: ['build'],
     defaultSeverity: 'build',
     canCancel: true,
@@ -61,7 +61,7 @@ export class IdeBackend {
     {label: 'Clean Project', command: 'ide-haskell-cabal:clean'},
     {label: 'Test', command: 'ide-haskell-cabal:test'},
     {label: 'Bench', command: 'ide-haskell-cabal:bench'},
-    {label: 'Build Dependencies', command: 'ide-haskell-cabal:build-dependencies'},
+    {label: 'Build Dependencies', command: 'ide-haskell-cabal:deps'},
     {label: 'Set Active Builder', command: 'ide-haskell-cabal:set-active-builder'},
     {label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target'},
   ]
@@ -225,7 +225,7 @@ export class IdeBackend {
 
       let newTarget = {...target}
 
-      if (! newTarget.target && ['build', 'build-dependencies'].includes(cmd)) {
+      if (! newTarget.target && ['build', 'deps'].includes(cmd)) {
         const cabalContents = await cabalFile.read()
         const tgts = await this.getActiveProjectTarget(cabalContents, cabalRoot)
         const [tgt] = tgts
