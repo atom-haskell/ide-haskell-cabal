@@ -16,7 +16,9 @@ export interface ResultType {
   hasError: boolean
 }
 
-export abstract class BuilderBase {
+export type TBuilderBase = {[K in CabalCommand]: () => Promise<ResultType>}
+
+export abstract class BuilderBase implements TBuilderBase {
   protected cabalArgs: string[]
   protected spawnOpts: {cwd: string, detached: boolean, env: { [key: string]: string | undefined }}
 
@@ -32,15 +34,15 @@ export abstract class BuilderBase {
     return this[cmd]()
   }
 
+  public abstract build (): Promise<ResultType>
+  public abstract test (): Promise<ResultType>
+  public abstract bench (): Promise<ResultType>
+  public abstract clean (): Promise<ResultType>
+  public abstract deps (): Promise<ResultType>
+
   protected async runCabal (extraArgs: string[] = []): Promise<ResultType> {
     return runCabalProcess(this.processName, this.cabalArgs.concat(extraArgs), this.spawnOpts, this.opts.opts)
   }
-
-  protected abstract build (): Promise<ResultType>
-  protected abstract test (): Promise<ResultType>
-  protected abstract bench (): Promise<ResultType>
-  protected abstract clean (): Promise<ResultType>
-  protected abstract deps (): Promise<ResultType>
 
   protected getConfigOpt (opt: string) {
     const map = {

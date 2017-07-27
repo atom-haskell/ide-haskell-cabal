@@ -7,32 +7,32 @@ export class Builder extends BuilderBase {
     super('cabal', opts)
   }
 
-  protected async build () {
+  public async build () {
     this.cabalArgs = ['build', '--only']
     if (this.opts.target.target) {
       this.cabalArgs.push(this.opts.target.target.target)
     }
     return this.commonBuild()
   }
-  protected async test () {
+  public async test () {
     this.opts.opts.severityChangeRx = {}
     this.opts.opts.severityChangeRx[this.opts.opts.severity] = /Running \d+ test suites\.\.\./
     this.opts.opts.severity = 'build'
     this.cabalArgs = ['test', '--only', '--show-details=always']
     return this.commonBuild()
   }
-  protected async bench () {
+  public async bench () {
     this.opts.opts.severityChangeRx = {}
     this.opts.opts.severityChangeRx[this.opts.opts.severity] =  /Running \d+ benchmarks\.\.\./
     this.opts.opts.severity = 'build'
     this.cabalArgs = ['bench', '--only', '--show-details=always']
     return this.commonBuild()
   }
-  protected async clean () {
+  public async clean () {
     this.cabalArgs = ['clean', '--save-configure']
     return this.commonBuild()
   }
-  protected async deps () {
+  public async deps () {
     const igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
     // tslint:disable-next-line: no-string-literal
     const sandboxConfig = this.spawnOpts.env['CABAL_SANDBOX_CONFIG'] || 'cabal.sandbox.config'

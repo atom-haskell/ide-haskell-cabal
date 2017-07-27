@@ -6,31 +6,31 @@ export class Builder extends BuilderBase {
     this.cabalArgs = atom.config.get('ide-haskell-cabal.stack.globalArguments') || []
   }
 
-  protected async build () {
+  public async build () {
     this.cabalArgs.push('build')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.buildArguments') || []))
     return this.common()
   }
-  protected async test () {
+  public async test () {
     this.cabalArgs.push('test')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.testArguments') || []))
     return this.runBuild()
   }
-  protected async bench () {
+  public async bench () {
     this.cabalArgs.push('bench')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.benchArguments') || []))
     return this.runBuild()
   }
-  protected async clean () {
+  public async clean () {
     this.cabalArgs.push('clean')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.cleanArguments') || []))
     return this.common()
   }
-  protected async deps () {
+  public async deps () {
     this.cabalArgs.push('build', '--only-dependencies')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.depsArguments') || []))

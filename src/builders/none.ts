@@ -4,19 +4,19 @@ export class Builder extends BuilderBase {
   constructor (opts: CtorOpts) {
     super('cabal', opts)
   }
-  protected async build () {
+  public async build () {
     return {exitCode: 0, hasError: false}
   }
-  protected async test () {
+  public async test () {
     return {exitCode: 0, hasError: false}
   }
-  protected async bench () {
+  public async bench () {
     return {exitCode: 0, hasError: false}
   }
-  protected async clean () {
+  public async clean () {
     return {exitCode: 0, hasError: false}
   }
-  protected async deps () {
+  public async deps () {
     return {exitCode: 0, hasError: false}
   }
 }
