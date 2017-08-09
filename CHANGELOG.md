@@ -1,3 +1,10 @@
+## 2.0.0
+* Better error handling/reporting
+* Bump min Atom version to 1.19
+* Use new notification buttons
+* Migrate to typescript
+* Migrate to UPI 0.3
+
 ## 1.9.2
 * Fix extra newline in errors
 
