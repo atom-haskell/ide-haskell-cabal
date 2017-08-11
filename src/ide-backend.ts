@@ -1,6 +1,5 @@
 import * as path from 'path'
-import * as fs from 'fs'
-import {CompositeDisposable, Emitter} from 'atom'
+import {CompositeDisposable} from 'atom'
 import * as Builders from './builders'
 import * as Util from 'atom-haskell-utils'
 import {TargetParamType, CabalCommand} from './common'
