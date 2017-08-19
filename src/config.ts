@@ -1,38 +1,38 @@
 const ghcVerProps = {
   pathExclusive: {
-      title: 'Replace PATH (rather than append to it)'
-    , type: 'boolean'
-    , default: false
-    , order: 10
+    title: 'Replace PATH (rather than append to it)',
+    type: 'boolean',
+    default: false,
+    order: 10,
   },
 
   pathTo: {
-      type: 'array'
-    , title: 'PATH; comma-separated'
-    , default: []
-    , order: 20
+    type: 'array',
+    title: 'PATH; comma-separated',
+    default: [],
+    order: 20,
   },
 
   sandbox: {
-      type: 'string'
-    , title: 'Sandbox configuration file'
-    , default: ''
-    , order: 30
+    type: 'string',
+    title: 'Sandbox configuration file',
+    default: '',
+    order: 30,
   },
 
   buildDir: {
-      type: 'string'
-    , title: 'Build directory'
-    , default: 'dist'
-    , order: 40
+    type: 'string',
+    title: 'Build directory',
+    default: 'dist',
+    order: 40,
   },
 }
 
 export const config = {
   enableNixBuild: {
-    description:  'Enable technical preview for cabal new-build introduced '
-                + 'with cabal-1.24. WARNING: this will break ghc-mod! Do not '
-                + 'enable unless you know what you are doing!',
+    description: 'Enable technical preview for cabal new-build introduced '
+    + 'with cabal-1.24. WARNING: this will break ghc-mod! Do not '
+    + 'enable unless you know what you are doing!',
     type: 'boolean',
     default: false,
     order: 0,
@@ -72,8 +72,8 @@ export const config = {
       ignoreNoSandbox: {
         type: 'boolean',
         title: 'Install dependencies with no sandbox',
-        description:  'Installing dependencies with no project sandbox is not '
-                    + 'recommended, but you can do it if you enable this option',
+        description: 'Installing dependencies with no project sandbox is not '
+        + 'recommended, but you can do it if you enable this option',
         default: false,
       },
       activeGhcVersion: {
@@ -112,6 +112,6 @@ export const config = {
         title: 'GHC 8.0',
         properties: ghcVerProps,
       },
-    }
-  }
+    },
+  },
 }
