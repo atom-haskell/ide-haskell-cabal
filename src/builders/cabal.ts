@@ -1,50 +1,50 @@
-import {CtorOpts, BuilderBase} from './base'
+import { CtorOpts, BuilderBase } from './base'
 
-import {runCabalProcess} from './cabal-process'
+import { runCabalProcess } from './cabal-process'
 
 export class Builder extends BuilderBase {
-  constructor (opts: CtorOpts) {
+  constructor(opts: CtorOpts) {
     super('cabal', opts)
   }
 
-  public async build () {
+  public async build() {
     this.cabalArgs = ['build', '--only']
     if (this.opts.target.target) {
       this.cabalArgs.push(this.opts.target.target.target)
     }
     return this.commonBuild()
   }
-  public async test () {
+  public async test() {
     this.opts.opts.severityChangeRx = {}
     this.opts.opts.severityChangeRx[this.opts.opts.severity] = /Running \d+ test suites\.\.\./
     this.opts.opts.severity = 'build'
     this.cabalArgs = ['test', '--only', '--show-details=always']
     return this.commonBuild()
   }
-  public async bench () {
+  public async bench() {
     this.opts.opts.severityChangeRx = {}
-    this.opts.opts.severityChangeRx[this.opts.opts.severity] =  /Running \d+ benchmarks\.\.\./
+    this.opts.opts.severityChangeRx[this.opts.opts.severity] = /Running \d+ benchmarks\.\.\./
     this.opts.opts.severity = 'build'
     this.cabalArgs = ['bench', '--only', '--show-details=always']
     return this.commonBuild()
   }
-  public async clean () {
+  public async clean() {
     this.cabalArgs = ['clean', '--save-configure']
     return this.commonBuild()
   }
-  public async deps () {
+  public async deps() {
     const igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
     // tslint:disable-next-line: no-string-literal
     const sandboxConfig = this.spawnOpts.env['CABAL_SANDBOX_CONFIG'] || 'cabal.sandbox.config'
     const se = this.opts.cabalRoot.getFile(sandboxConfig).existsSync()
     if (!(se || igns)) {
-      const res = await new Promise<{exitCode: number, hasError: boolean}>((resolve, reject) => {
+      const res = await new Promise<{ exitCode: number, hasError: boolean }>((resolve, reject) => {
         const notification = atom.notifications.addWarning('No sandbox found, stopping', {
           dismissable: true,
           detail: 'ide-haskell-cabal did not find sandbox configuration ' +
-                  'file. Installing dependencies without sandbox is ' +
-                  'dangerous and is not recommended. It is suggested to ' +
-                  'create a sandbox right now.',
+          'file. Installing dependencies without sandbox is ' +
+          'dangerous and is not recommended. It is suggested to ' +
+          'create a sandbox right now.',
           buttons: [
             {
               className: 'icon icon-rocket',
@@ -52,9 +52,9 @@ export class Builder extends BuilderBase {
               onDidClick: () => {
                 resolve(this.createSandbox())
                 notification.dismiss()
-              }
-            }
-          ]
+              },
+            },
+          ],
         })
         const disp = notification.onDidDismiss(() => {
           disp.dispose()
@@ -69,11 +69,11 @@ export class Builder extends BuilderBase {
     return this.commonBuild()
   }
 
-  private async createSandbox () {
+  private async createSandbox() {
     return runCabalProcess('cabal', ['sandbox', 'init'], this.spawnOpts, this.opts.opts)
   }
 
-  private async commonBuild () {
+  private async commonBuild() {
     this.cabalArgs.push('--builddir=' + this.getConfigOpt('buildDir'))
     return this.runCabal()
   }

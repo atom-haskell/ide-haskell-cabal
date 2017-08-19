@@ -1,18 +1,18 @@
 import * as child_process from 'child_process'
-import {kill} from 'process'
+import { kill } from 'process'
 import * as path from 'path'
-import {EOL} from 'os'
+import { EOL } from 'os'
 
 // // Atom dependencies
-import {Directory, Point} from 'atom'
+import { Directory, Point } from 'atom'
 
 export interface IParams {
   onMsg?: (msg: UPI.IResultItem) => void
   onProgress?: (progress: number) => void
-  onDone?: (done: {exitCode: number, hasError: boolean}) => void
+  onDone?: (done: { exitCode: number, hasError: boolean }) => void
   setCancelAction?: (action: () => void) => void
   severity: UPI.TSeverity
-  severityChangeRx?: { [K in UPI.TSeverity]: RegExp }
+  severityChangeRx?: {[K in UPI.TSeverity]: RegExp }
 }
 
 class CabalProcess {
@@ -20,7 +20,7 @@ class CabalProcess {
   private running: boolean
   private hasError: boolean
 
-  constructor (command: string, args: string[], options: child_process.SpawnOptions, private params: IParams) {
+  constructor(command: string, args: string[], options: child_process.SpawnOptions, private params: IParams) {
     this.cwd = new Directory(options.cwd || '.')
     this.running = true
     // cabal returns failure when there are type errors _or_ when it can't
@@ -89,12 +89,12 @@ class CabalProcess {
     proc.stderr.on('data', blockBuffered(handleMessage))
 
     proc.on('close', (exitCode, signal) => {
-      if (this.params.onDone) { this.params.onDone({exitCode, hasError: this.hasError}) }
+      if (this.params.onDone) { this.params.onDone({ exitCode, hasError: this.hasError }) }
       this.running = false
     })
   }
 
-  private unindentMessage (lines: string[]) {
+  private unindentMessage(lines: string[]) {
     const minIndent = Math.min(...(lines.map((line) => {
       const match = line.match(/^\s*/)
       if (match) {
@@ -106,7 +106,7 @@ class CabalProcess {
     return lines.map((line) => line.slice(minIndent)).join('\n')
   }
 
-  private parseMessage (raw: string) {
+  private parseMessage(raw: string) {
     if (raw.trim() !== '') {
       const matchLoc = /^(.+):(\d+):(\d+):(?: (\w+):)?[ \t]*(\[[^\]]+\])?[ \t]*\n?([^]*)/
       const matched = (raw as any).trimRight().match(matchLoc)
@@ -122,21 +122,21 @@ class CabalProcess {
           context,
           message: {
             text: this.unindentMessage(msg.split('\n')),
-            highlighter: 'hint.message.haskell'
+            highlighter: 'hint.message.haskell',
           },
-          severity: typ
+          severity: typ,
         }
       } else {
         return {
           message: raw,
-          severity: this.params.severity
+          severity: this.params.severity,
         }
       }
     }
   }
 
-  private checkSeverityChange (data: string) {
-    if (! this.params.severityChangeRx) { return }
+  private checkSeverityChange(data: string) {
+    if (!this.params.severityChangeRx) { return }
     for (const [sev, rx] of Object.entries(this.params.severityChangeRx)) {
       if (data.match(rx)) {
         this.params.severity = sev
@@ -145,20 +145,21 @@ class CabalProcess {
     }
   }
 
-  private checkProgress (data: string) {
+  private checkProgress(data: string) {
     const match = data.match(/\[\s*([\d]+)\s+of\s+([\d]+)\s*\]/)
     if (match) {
-      const progress = match[1], total = match[2]
+      const progress = match[1]
+      const total = match[2]
       this.params.onProgress && this.params.onProgress(parseInt(progress, 10) / parseInt(total, 10))
     }
   }
 }
 
-export async function runCabalProcess (
-  command: string, args: string[], options: child_process.SpawnOptions, pars: IParams
+export async function runCabalProcess(
+  command: string, args: string[], options: child_process.SpawnOptions, pars: IParams,
 ) {
-  const newPars: IParams = {...pars}
-  return new Promise<{exitCode: number, hasError: boolean}>((resolve) => {
+  const newPars: IParams = { ...pars }
+  return new Promise<{ exitCode: number, hasError: boolean }>((resolve) => {
     newPars.onDone = resolve
     // tslint:disable-next-line: no-unused-expression
     new CabalProcess(command, args, options, newPars)

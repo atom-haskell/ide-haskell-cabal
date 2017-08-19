@@ -1,9 +1,9 @@
-import {delimiter} from 'path'
+import { delimiter } from 'path'
 
-import {CabalCommand, TargetParamType} from './../common'
+import { CabalCommand, TargetParamType } from './../common'
 
-import {runCabalProcess, IParams} from './cabal-process'
-export {IParams}
+import { runCabalProcess, IParams } from './cabal-process'
+export { IParams }
 
 export interface CtorOpts {
   opts: IParams,
@@ -20,44 +20,44 @@ export type TBuilderBase = {[K in CabalCommand]: () => Promise<ResultType>}
 
 export abstract class BuilderBase implements TBuilderBase {
   protected cabalArgs: string[]
-  protected spawnOpts: {cwd: string, detached: boolean, env: { [key: string]: string | undefined }}
+  protected spawnOpts: { cwd: string, detached: boolean, env: { [key: string]: string | undefined } }
 
-  constructor (
+  constructor(
     private processName: string,
-    protected opts: CtorOpts
+    protected opts: CtorOpts,
   ) {
     this.spawnOpts = this.getSpawnOpts()
     this.cabalArgs = []
   }
 
-  public async runCommand (cmd: CabalCommand): Promise<ResultType> {
+  public async runCommand(cmd: CabalCommand): Promise<ResultType> {
     return this[cmd]()
   }
 
-  public abstract build (): Promise<ResultType>
-  public abstract test (): Promise<ResultType>
-  public abstract bench (): Promise<ResultType>
-  public abstract clean (): Promise<ResultType>
-  public abstract deps (): Promise<ResultType>
+  public abstract build(): Promise<ResultType>
+  public abstract test(): Promise<ResultType>
+  public abstract bench(): Promise<ResultType>
+  public abstract clean(): Promise<ResultType>
+  public abstract deps(): Promise<ResultType>
 
-  protected async runCabal (extraArgs: string[] = []): Promise<ResultType> {
+  protected async runCabal(extraArgs: string[] = []): Promise<ResultType> {
     return runCabalProcess(this.processName, this.cabalArgs.concat(extraArgs), this.spawnOpts, this.opts.opts)
   }
 
-  protected getConfigOpt (opt: string) {
+  protected getConfigOpt(opt: string) {
     const map = {
-      '7.2':  atom.config.get(`ide-haskell-cabal.cabal.ghc702.${opt}`),
-      '7.4':  atom.config.get(`ide-haskell-cabal.cabal.ghc704.${opt}`),
-      '7.6':  atom.config.get(`ide-haskell-cabal.cabal.ghc706.${opt}`),
-      '7.8':  atom.config.get(`ide-haskell-cabal.cabal.ghc708.${opt}`),
+      '7.2': atom.config.get(`ide-haskell-cabal.cabal.ghc702.${opt}`),
+      '7.4': atom.config.get(`ide-haskell-cabal.cabal.ghc704.${opt}`),
+      '7.6': atom.config.get(`ide-haskell-cabal.cabal.ghc706.${opt}`),
+      '7.8': atom.config.get(`ide-haskell-cabal.cabal.ghc708.${opt}`),
       '7.10': atom.config.get(`ide-haskell-cabal.cabal.ghc710.${opt}`),
-      '8.0':  atom.config.get(`ide-haskell-cabal.cabal.ghc800.${opt}`),
+      '8.0': atom.config.get(`ide-haskell-cabal.cabal.ghc800.${opt}`),
     }
     return map[atom.config.get('ide-haskell-cabal.cabal.activeGhcVersion')]
   }
 
   /* tslint:disable: no-string-literal */
-  private getSpawnOpts () {
+  private getSpawnOpts() {
     // Setup default opts
     const opts = {
       cwd: this.opts.cabalRoot.getPath(),
@@ -65,8 +65,9 @@ export abstract class BuilderBase implements TBuilderBase {
       env: {},
     }
 
-    const env = {...process.env}
+    const env = { ...process.env }
 
+    // tslint:disable-next-line: totality-check
     if (process.platform === 'win32') {
       const path: string[] = []
       const capMask = (str: string, mask: number) => {
