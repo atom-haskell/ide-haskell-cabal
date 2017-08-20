@@ -1,3 +1,7 @@
+## 2.0.1
+* Fix possible undefined error
+* Enforce code style
+
 ## 2.0.0
 * Better error handling/reporting
 * Bump min Atom version to 1.19
