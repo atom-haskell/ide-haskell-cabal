@@ -128,7 +128,7 @@ export class IdeBackend {
         return builders
       },
       itemTemplate: (item: BuilderParamType) => `<li><div class='name'>${item.name}</div></li>`,
-      displayTemplate: (item: BuilderParamType) => item && item.name ? item.name : 'Not set',
+      displayTemplate: (item?: BuilderParamType) => item && item.name ? item.name : 'Not set',
       itemFilterKey: 'name',
       description: 'Select builder to use with current project',
     }
@@ -175,7 +175,8 @@ export class IdeBackend {
         }
           <div class='clearfix'></div>
         </li>`,
-      displayTemplate: (item: TargetParamType) => {
+      displayTemplate: (item?: TargetParamType) => {
+        if (!item) return 'undefined'
         if (!item.dir) {
           return item.project
         } else {
