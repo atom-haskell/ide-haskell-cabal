@@ -9,8 +9,10 @@ export class Builder extends BuilderBase {
 
   public async build() {
     this.cabalArgs = ['build', '--only']
-    if (this.opts.target.target) {
-      this.cabalArgs.push(this.opts.target.target.target)
+    const comp = (this.opts.target.target && this.opts.target.target.target)
+                 || this.opts.target.component
+    if (comp) {
+      this.cabalArgs.push(comp)
     }
     return this.commonBuild()
   }

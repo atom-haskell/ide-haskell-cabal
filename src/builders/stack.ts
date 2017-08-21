@@ -10,7 +10,7 @@ export class Builder extends BuilderBase {
     this.cabalArgs.push('build')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.buildArguments') || []))
-    return this.common()
+    return this.runCabal(['--no-run-tests', '--no-run-benchmarks'])
   }
   public async test() {
     this.cabalArgs.push('test')
@@ -28,17 +28,18 @@ export class Builder extends BuilderBase {
     this.cabalArgs.push('clean')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.cleanArguments') || []))
-    return this.common()
+    return this.runCabal()
   }
   public async deps() {
     this.cabalArgs.push('build', '--only-dependencies')
     this.component()
     this.cabalArgs.push(...(atom.config.get('ide-haskell-cabal.stack.depsArguments') || []))
-    return this.common()
+    return this.runCabal()
   }
 
   private component() {
-    let comp = this.opts.target.target && this.opts.target.target.target
+    let comp = (this.opts.target.target && this.opts.target.target.target)
+              || this.opts.target.component
     if (comp) {
       if (comp.startsWith('lib:')) { comp = 'lib' }
       comp = `${this.opts.target.project}:${comp}`
@@ -54,11 +55,7 @@ export class Builder extends BuilderBase {
     if (res.exitCode !== 0) {
       return res
     } else {
-      return this.common()
+      return this.runCabal()
     }
-  }
-
-  private async common() {
-    return this.runCabal()
   }
 }

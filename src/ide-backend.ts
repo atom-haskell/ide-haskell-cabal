@@ -262,7 +262,7 @@ export class IdeBackend {
         throw new Error(`Unknown builder '${(builderParam && builderParam.name) || builderParam}'`)
       }
 
-      const res = await (new builder({ opts, target, cabalRoot })).runCommand(cmd)
+      const res = await (new builder({ opts, target: newTarget, cabalRoot })).runCommand(cmd)
       // see CabalProcess for explaination
       // tslint:disable-next-line: no-null-keyword
       if (res.exitCode === null) { // this means process was killed
