@@ -1,3 +1,7 @@
+## 2.0.2
+* Fix component resolution
+* Don't run test\/bench on stack build
+
 ## 2.0.1
 * Fix possible undefined error
 * Enforce code style
