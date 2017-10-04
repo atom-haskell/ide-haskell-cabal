@@ -1,3 +1,6 @@
+## 2.0.3
+* Add missing stack argument settings
+
 ## 2.0.2
 * Fix component resolution
 * Don't run test\/bench on stack build
