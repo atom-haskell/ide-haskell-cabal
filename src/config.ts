@@ -64,6 +64,18 @@ export const config = {
         default: [],
         order: 30,
       },
+      cleanArguments: {
+        type: 'array',
+        description: 'Stack clean command arguments (comma-separated)',
+        default: [],
+        order: 40,
+      },
+      depsArguments: {
+        type: 'array',
+        description: 'Stack install --only-dependencies command arguments (comma-separated)',
+        default: [],
+        order: 50,
+      },
     },
   },
   cabal: {

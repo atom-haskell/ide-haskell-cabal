@@ -44,16 +44,16 @@ export abstract class BuilderBase implements TBuilderBase {
     return runCabalProcess(this.processName, this.cabalArgs.concat(extraArgs), this.spawnOpts, this.opts.opts)
   }
 
-  protected getConfigOpt(opt: string) {
+  protected getConfigOpt<K extends keyof GHCVerProps>(opt: K): GHCVerProps[K] {
     const map = {
-      '7.2': atom.config.get(`ide-haskell-cabal.cabal.ghc702.${opt}`),
-      '7.4': atom.config.get(`ide-haskell-cabal.cabal.ghc704.${opt}`),
-      '7.6': atom.config.get(`ide-haskell-cabal.cabal.ghc706.${opt}`),
-      '7.8': atom.config.get(`ide-haskell-cabal.cabal.ghc708.${opt}`),
-      '7.10': atom.config.get(`ide-haskell-cabal.cabal.ghc710.${opt}`),
-      '8.0': atom.config.get(`ide-haskell-cabal.cabal.ghc800.${opt}`),
+      '7.2': atom.config.get('ide-haskell-cabal.cabal.ghc702'),
+      '7.4': atom.config.get('ide-haskell-cabal.cabal.ghc704'),
+      '7.6': atom.config.get('ide-haskell-cabal.cabal.ghc706'),
+      '7.8': atom.config.get('ide-haskell-cabal.cabal.ghc708'),
+      '7.10': atom.config.get('ide-haskell-cabal.cabal.ghc710'),
+      '8.0': atom.config.get('ide-haskell-cabal.cabal.ghc800'),
     }
-    return map[atom.config.get('ide-haskell-cabal.cabal.activeGhcVersion')]
+    return map[atom.config.get('ide-haskell-cabal.cabal.activeGhcVersion')][opt]
   }
 
   /* tslint:disable: no-string-literal */
