@@ -283,6 +283,7 @@ export class IdeBackend {
       if (error) {
         // tslint:disable-next-line: no-console
         console.error(error)
+        // tslint:disable-next-line: no-unsafe-any
         this.upi.setStatus({ status: 'error', detail: error.toString() })
       } else {
         this.upi.setStatus({ status: 'warning', detail: 'Build failed with no errors' })

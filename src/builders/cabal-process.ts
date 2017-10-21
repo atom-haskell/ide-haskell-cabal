@@ -109,7 +109,7 @@ class CabalProcess {
   private parseMessage(raw: string) {
     if (raw.trim() !== '') {
       const matchLoc = /^(.+):(\d+):(\d+):(?: (\w+):)?[ \t]*(\[[^\]]+\])?[ \t]*\n?([^]*)/
-      const matched = (raw as any).trimRight().match(matchLoc)
+      const matched = raw.trimRight().match(matchLoc)
       if (matched) {
         this.hasError = true
 
