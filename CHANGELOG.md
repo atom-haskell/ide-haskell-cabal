@@ -1,3 +1,8 @@
+## 2.0.4
+* getComponentFromFile can return null
+* Update typings
+* Update lints, typings
+
 ## 2.0.3
 * Add missing stack argument settings
 
