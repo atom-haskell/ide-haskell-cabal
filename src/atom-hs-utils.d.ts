@@ -5,7 +5,7 @@ declare module 'atom-haskell-utils' {
   export function getDirEntries(dir: Directory): Promise<Array<Directory | File>>;
   export function getRootDir(input: TextBuffer | File | string | null): Promise<Directory>;
   export function parseDotCabal(cabalSource: string): Promise<IDotCabal | null>;
-  export function getComponentFromFile(cabalSource: string, filePath: string): Promise<string[]>;
+  export function getComponentFromFile(cabalSource: string, filePath: string): Promise<string[] | null>;
   export function unlit(filename: string, source: string): Promise<string>;
   export function parseHsModuleImports(source: string): Promise<IModuleImports>;
   export let hsEscapeString: (input: string) => string;

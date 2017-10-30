@@ -197,10 +197,12 @@ export class IdeBackend {
     }
   }
 
-  private async getActiveProjectTarget(cabalfile: string, cabalRoot: AtomTypes.Directory) {
+  private async getActiveProjectTarget(cabalfile: string, cabalRoot: AtomTypes.Directory): Promise<string[]> {
     const editor = atom.workspace.getActiveTextEditor()
     if (editor && editor.getPath()) {
-      return Util.getComponentFromFile(cabalfile, cabalRoot.relativize(editor.getPath()))
+      const res = await Util.getComponentFromFile(cabalfile, cabalRoot.relativize(editor.getPath()))
+      if (res) return res
+      else return []
     } else {
       return []
     }
