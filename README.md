@@ -1,4 +1,4 @@
-# ide-haskell-cabal package
+# ide-haskell-cabal package ![](https://david-dm.org/atom-haskell/ide-haskell-cabal.svg)
 
 The `ide-haskell-cabal` package provides a build backend for `ide-haskell`
 package based on `cabal` or `stack`.
