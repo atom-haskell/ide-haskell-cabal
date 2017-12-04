@@ -19,7 +19,7 @@
     "atom": ">=1.19.0 <2.0.0"
   },
   "dependencies": {
-    "atom-haskell-utils": "^1.0.0"
+    "atom-haskell-utils": "^1.0.1"
   },
   "consumedServices": {
     "ide-haskell-upi": {
