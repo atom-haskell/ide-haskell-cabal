@@ -1,3 +1,6 @@
+## 2.0.5
+* Bump atom-haskell-utils (getComponentsFromFile bug)
+
 ## 2.0.4
 * getComponentFromFile can return null
 * Update typings
