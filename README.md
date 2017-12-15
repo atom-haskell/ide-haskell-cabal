@@ -14,3 +14,19 @@ It also provides support for `ide-haskell`'s build target selection by reading a
 ## Installation and configuration
 
 Please refer to documentation site https://atom-haskell.github.io
+
+# License
+
+Copyright © 2015 Atom-Haskell
+
+Contributors (by number of commits):
+
+<!-- BEGIN CONTRIBUTORS LIST -->
+* Nikolay Yakimov
+* Edsko de Vries
+
+<!-- END CONTRIBUTORS LIST -->
+
+See the [LICENSE.md][LICENSE] for details.
+
+[LICENSE]: https://github.com/atom-haskell/ide-haskell-cabal/blob/master/LICENSE.md
