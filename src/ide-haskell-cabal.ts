@@ -1,5 +1,6 @@
 import { Disposable, CompositeDisposable } from 'atom'
 import { IdeBackend } from './ide-backend'
+import * as UPI from 'atom-haskell-upi'
 
 export { config } from './config'
 

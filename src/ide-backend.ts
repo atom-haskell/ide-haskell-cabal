@@ -1,12 +1,13 @@
 import * as path from 'path'
-import { CompositeDisposable } from 'atom'
+import { File, CompositeDisposable, Disposable, Directory } from 'atom'
 import * as Builders from './builders'
 import * as Util from 'atom-haskell-utils'
 import { TargetParamType, CabalCommand } from './common'
+import * as UPI from 'atom-haskell-upi'
 
 interface BuilderParamType { name: string }
 
-function isCabalFile(file?: AtomTypes.File | AtomTypes.Directory): file is AtomTypes.File {
+function isCabalFile(file?: File | Directory): file is File {
   return !!(file && file.isFile() && file.getBaseName().endsWith('.cabal'))
 }
 
@@ -190,22 +191,27 @@ export class IdeBackend {
 
   private getActiveProjectPath(): string {
     const editor = atom.workspace.getActiveTextEditor()
-    if (editor && editor.getPath()) {
-      return path.dirname(editor.getPath())
-    } else {
-      return atom.project.getPaths()[0] || process.cwd()
+    if (editor) {
+      const edpath = editor.getPath()
+      if (edpath) {
+        return path.dirname(edpath)
+      }
     }
+    return atom.project.getPaths()[0] || process.cwd()
   }
 
-  private async getActiveProjectTarget(cabalfile: string, cabalRoot: AtomTypes.Directory): Promise<string[]> {
+  private async getActiveProjectTarget(cabalfile: string, cabalRoot: Directory): Promise<string[]> {
     const editor = atom.workspace.getActiveTextEditor()
-    if (editor && editor.getPath()) {
-      const res = await Util.getComponentFromFile(cabalfile, cabalRoot.relativize(editor.getPath()))
-      if (res) return res
-      else return []
-    } else {
-      return []
+    if (editor) {
+      const edpath = editor.getPath()
+      if (edpath) {
+        const res = await Util.getComponentFromFile(cabalfile, cabalRoot.relativize(edpath))
+        if (res) return res
+        else return []
+      }
     }
+    // default
+    return []
   }
 
   private async cabalBuild(cmd: CabalCommand, opts: Builders.IParams): Promise<void> {
@@ -230,7 +236,7 @@ export class IdeBackend {
 
       const cabalRoot = await Util.getRootDir(target.dir ? target.dir : this.getActiveProjectPath())
 
-      const [cabalFile]: AtomTypes.File[] = cabalRoot.getEntriesSync().filter(isCabalFile)
+      const [cabalFile]: File[] = cabalRoot.getEntriesSync().filter(isCabalFile)
 
       if (!cabalFile) { throw new Error('No cabal file found') }
 
@@ -299,7 +305,7 @@ export class IdeBackend {
     const messages: UPI.IResultItem[] = []
     this.upi.setMessages(messages)
 
-    let cancelActionDisp: AtomTypes.Disposable | undefined
+    let cancelActionDisp: Disposable | undefined
 
     await this.cabalBuild(command, {
       severity: defaultSeverity,

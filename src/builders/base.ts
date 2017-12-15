@@ -3,12 +3,13 @@ import { delimiter } from 'path'
 import { CabalCommand, TargetParamType } from './../common'
 
 import { runCabalProcess, IParams } from './cabal-process'
+import { Directory } from 'atom'
 export { IParams }
 
 export interface CtorOpts {
   opts: IParams,
   target: TargetParamType,
-  cabalRoot: AtomTypes.Directory
+  cabalRoot: Directory
 }
 
 export interface ResultType {

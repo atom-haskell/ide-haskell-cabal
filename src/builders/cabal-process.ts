@@ -2,6 +2,7 @@ import * as child_process from 'child_process'
 import { kill } from 'process'
 import * as path from 'path'
 import { EOL } from 'os'
+import * as UPI from 'atom-haskell-upi'
 
 // // Atom dependencies
 import { Directory, Point } from 'atom'
@@ -17,12 +18,10 @@ export interface IParams {
 
 class CabalProcess {
   private cwd: Directory
-  private running: boolean
   private hasError: boolean
 
   constructor(command: string, args: string[], options: child_process.SpawnOptions, private params: IParams) {
     this.cwd = new Directory(options.cwd || '.')
-    this.running = true
     // cabal returns failure when there are type errors _or_ when it can't
     // compile the code at all (i.e., when there are missing dependencies).
     // Since it's hard to distinguish between these two, we look at the
@@ -88,9 +87,8 @@ class CabalProcess {
     proc.stdout.on('data', blockBuffered(handleMessage))
     proc.stderr.on('data', blockBuffered(handleMessage))
 
-    proc.on('close', (exitCode, signal) => {
+    proc.on('close', (exitCode) => {
       if (this.params.onDone) { this.params.onDone({ exitCode, hasError: this.hasError }) }
-      this.running = false
     })
   }
 
@@ -133,6 +131,7 @@ class CabalProcess {
         }
       }
     }
+    return undefined
   }
 
   private checkSeverityChange(data: string) {
