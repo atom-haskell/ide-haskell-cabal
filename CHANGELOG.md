@@ -1,3 +1,10 @@
+## 2.1.0
+* Add dependency on tslib
+* Bump minimal Atom version to 1.22
+* Add project 'All' build target, rename old 'All' to 'Auto'
+* Add license information to README
+* Update typings, dependencies
+
 ## 2.0.5
 * Bump atom-haskell-utils (getComponentsFromFile bug)
 
