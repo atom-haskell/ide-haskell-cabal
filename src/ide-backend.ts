@@ -2,7 +2,7 @@ import * as path from 'path'
 import { File, CompositeDisposable, Disposable, Directory } from 'atom'
 import * as Builders from './builders'
 import * as Util from 'atom-haskell-utils'
-import { TargetParamType, CabalCommand, TargetParamTypePartial } from './common'
+import { TargetParamType, CabalCommand, TargetParamTypeForBuilder } from './common'
 import * as UPI from 'atom-haskell-upi'
 
 interface BuilderParamType { name: string }
@@ -153,7 +153,7 @@ export class IdeBackend {
             const project = await Util.parseDotCabal(data)
             if (project) {
               projects.push({ project: project.name, dir, type: 'auto' })
-              projects.push({ project: project.name, dir, type: 'all', targets: project.targets })
+              projects.push({ project: project.name, dir, type: 'all' })
               for (const target of project.targets) {
                 projects.push({
                   project: project.name,
@@ -270,9 +270,8 @@ export class IdeBackend {
 
       if (!cabalFile) { throw new Error('No cabal file found') }
 
-      let newTarget: TargetParamTypePartial = { ...target }
+      let newTarget: TargetParamTypeForBuilder | undefined
 
-      // tslint:disable-next-line:totality-check
       if (target.type === 'auto') {
         const cabalContents = await cabalFile.read()
         const tgts = await this.getActiveProjectTarget(cabalContents, cabalRoot)
@@ -287,6 +286,27 @@ export class IdeBackend {
               component: tgt,
             }
           }
+        }
+      } else if (target.type === 'all') {
+        const cabalContents = await cabalFile.read()
+        const cf = await Util.parseDotCabal(cabalContents)
+        if (cf) {
+          newTarget = newTarget = {
+            project: cf.name,
+            dir: cabalRoot.getPath(),
+            type: 'all',
+            targets: cf.targets,
+          }
+        }
+      } else if (target.type === 'component') {
+        const { project, dir, component } = target
+        newTarget = { type: 'component', project, dir, component }
+      }
+      if (!newTarget) {
+        newTarget = {
+          type: 'auto',
+          project: target.project,
+          dir: target.dir,
         }
       }
       const builders: TBuilders = {

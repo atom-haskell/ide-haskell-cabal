@@ -1,24 +1,25 @@
 import * as Util from 'atom-haskell-utils'
 
-export type TargetDesc = {
+export interface ProjectDesc {
+  project: string
+  dir: string | undefined
+}
+export type TargetParamType = ({
   type: 'component'
   target: Util.ITarget
+  component: string
+} | {
+  type: 'all'
+} | {
+  type: 'auto'
+}) & ProjectDesc
+export type TargetParamTypeForBuilder = ({
+  type: 'component'
   component: string
 } | {
   type: 'all'
   targets: Util.ITarget[]
 } | {
   type: 'auto'
-}
-export type TargetParamType = {
-  project: string
-  dir: string | undefined
-} & TargetDesc
-export type TargetParamTypePartial = {
-  project: string
-  dir: string | undefined
-} & (TargetDesc | {
-  type: 'component'
-  component: string
-})
+}) & ProjectDesc
 export type CabalCommand = 'build' | 'clean' | 'test' | 'bench' | 'deps'
