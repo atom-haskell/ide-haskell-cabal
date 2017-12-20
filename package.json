@@ -19,7 +19,8 @@
     "atom": ">=1.22.0 <2.0.0"
   },
   "dependencies": {
-    "atom-haskell-utils": "^1.0.1"
+    "atom-haskell-utils": "^1.0.1",
+    "tslib": "^1.8.1"
   },
   "consumedServices": {
     "ide-haskell-upi": {
