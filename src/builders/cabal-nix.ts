@@ -10,9 +10,7 @@ export class Builder extends BuilderBase {
 
   public async build() {
     this.cabalArgs = ['new-build']
-    if (this.opts.target.target) {
-      this.cabalArgs.push(this.opts.target.target.target)
-    }
+    this.component()
     return this.runCabal()
   }
   public async test(): Promise<{ exitCode: number, hasError: boolean }> {
@@ -30,5 +28,18 @@ export class Builder extends BuilderBase {
   public async deps(): Promise<{ exitCode: number, hasError: boolean }> {
     atom.notifications.addWarning("Command 'deps' is not implemented for cabal-nix")
     throw new Error("Command 'deps' is not implemented for cabal-nix")
+  }
+
+  private component() {
+    switch (this.opts.target.type) {
+      case 'all':
+        this.cabalArgs.push(...this.opts.target.targets.map(x => x.target))
+        break
+      case 'component':
+        this.cabalArgs.push(this.opts.target.component)
+        break
+      case 'auto':
+        break
+    }
   }
 }

@@ -2,7 +2,7 @@ import * as path from 'path'
 import { File, CompositeDisposable, Disposable, Directory } from 'atom'
 import * as Builders from './builders'
 import * as Util from 'atom-haskell-utils'
-import { TargetParamType, CabalCommand } from './common'
+import { TargetParamType, CabalCommand, TargetParamTypePartial } from './common'
 import * as UPI from 'atom-haskell-upi'
 
 interface BuilderParamType { name: string }
@@ -136,11 +136,10 @@ export class IdeBackend {
   }
 
   private targetParamInfo(): UPI.IParamSpec<TargetParamType> {
-    const defaultVal = {
+    const defaultVal: TargetParamType = {
       project: 'Auto',
-      component: undefined,
+      type: 'auto',
       dir: undefined,
-      target: undefined,
     }
     return {
       default: defaultVal,
@@ -153,35 +152,66 @@ export class IdeBackend {
             const data = await cabalFile.read()
             const project = await Util.parseDotCabal(data)
             if (project) {
-              projects.push({ project: project.name, dir, component: undefined, target: undefined })
+              projects.push({ project: project.name, dir, type: 'auto' })
+              projects.push({ project: project.name, dir, type: 'all', targets: project.targets })
               for (const target of project.targets) {
-                projects.push({ project: project.name, dir, target, component: target.target })
+                projects.push({
+                  project: project.name,
+                  dir,
+                  type: 'component',
+                  target,
+                  component: target.target,
+                })
               }
             }
           }
         }
         return projects
       },
-      itemTemplate: (tgt: TargetParamType) =>
-        `<li>
-          <div class='project'>${tgt.project}</div>
-          <div class='dir'>${tgt.dir || ''}</div>
-          ${
-        tgt.target ?
-          `
+      itemTemplate: (tgt: TargetParamType) => {
+        let desc: string
+        switch (tgt.type) {
+          case 'auto':
+            desc = `<div class='name'>Auto</div>`
+            break
+          case 'all':
+            desc = `<div class='name'>All</div>`
+            break
+          case 'component':
+            desc = `
             <div class='type'>${tgt.target.type}</div>
             <div class='name'>${tgt.target.name}</div>
-            ` :
-          `<div class='name'>${'All'}</div>`
+            `
+            break
         }
+        // tslint:disable:no-non-null-assertion
+        return `<li>
+          <div class='project'>${tgt.project}</div>
+          <div class='dir'>${tgt.dir || ''}</div>
+          ${desc!}
           <div class='clearfix'></div>
-        </li>`,
+        </li>`
+        // tslint:enable:no-non-null-assertion
+      },
       displayTemplate: (item?: TargetParamType) => {
         if (!item) return 'undefined'
         if (!item.dir) {
           return item.project
         } else {
-          return `${item.project}: ${item.target ? item.target.name : 'All'}`
+          let target: string
+          switch (item.type) {
+            case 'auto':
+              target = 'Auto'
+              break
+            case 'all':
+              target = 'All'
+              break
+            case 'component':
+              target = item.target.name
+              break
+          }
+          // tslint:disable-next-line:no-non-null-assertion
+          return `${item.project}: ${target!}`
         }
       },
       itemFilterKey: 'name',
@@ -240,9 +270,10 @@ export class IdeBackend {
 
       if (!cabalFile) { throw new Error('No cabal file found') }
 
-      let newTarget = { ...target }
+      let newTarget: TargetParamTypePartial = { ...target }
 
-      if (!newTarget.target && ['build', 'deps'].includes(cmd)) {
+      // tslint:disable-next-line:totality-check
+      if (target.type === 'auto') {
         const cabalContents = await cabalFile.read()
         const tgts = await this.getActiveProjectTarget(cabalContents, cabalRoot)
         const [tgt] = tgts
@@ -251,9 +282,9 @@ export class IdeBackend {
           if (cf) {
             newTarget = {
               project: cf.name,
-              component: tgt,
               dir: cabalRoot.getPath(),
-              target: undefined,
+              type: 'component',
+              component: tgt,
             }
           }
         }

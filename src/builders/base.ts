@@ -1,6 +1,6 @@
 import { delimiter } from 'path'
 
-import { CabalCommand, TargetParamType } from './../common'
+import { CabalCommand, TargetParamTypePartial } from './../common'
 
 import { runCabalProcess, IParams } from './cabal-process'
 import { Directory } from 'atom'
@@ -8,7 +8,7 @@ export { IParams }
 
 export interface CtorOpts {
   opts: IParams,
-  target: TargetParamType,
+  target: TargetParamTypePartial,
   cabalRoot: Directory
 }
 

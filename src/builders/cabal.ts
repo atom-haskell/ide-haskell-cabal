@@ -9,11 +9,7 @@ export class Builder extends BuilderBase {
 
   public async build() {
     this.cabalArgs = ['build', '--only']
-    const comp = (this.opts.target.target && this.opts.target.target.target)
-                 || this.opts.target.component
-    if (comp) {
-      this.cabalArgs.push(comp)
-    }
+    this.component()
     return this.commonBuild()
   }
   public async test() {
@@ -69,6 +65,19 @@ export class Builder extends BuilderBase {
     }
     this.cabalArgs = ['install', '--only-dependencies', '--enable-tests', '--enable-benchmarks']
     return this.commonBuild()
+  }
+
+  private component() {
+    switch (this.opts.target.type) {
+      case 'all':
+        this.cabalArgs.push(...this.opts.target.targets.map(x => x.target))
+        break
+      case 'component':
+        this.cabalArgs.push(this.opts.target.component)
+        break
+      case 'auto':
+        break
+    }
   }
 
   private async createSandbox() {

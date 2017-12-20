@@ -37,13 +37,21 @@ export class Builder extends BuilderBase {
     return this.runCabal()
   }
 
+  private fixTarget(comp: string): string {
+    if (comp.startsWith('lib:')) { comp = 'lib' }
+    return `${this.opts.target.project}:${comp}`
+  }
+
   private component() {
-    let comp = (this.opts.target.target && this.opts.target.target.target)
-              || this.opts.target.component
-    if (comp) {
-      if (comp.startsWith('lib:')) { comp = 'lib' }
-      comp = `${this.opts.target.project}:${comp}`
-      this.cabalArgs.push(comp)
+    switch (this.opts.target.type) {
+      case 'all':
+        this.cabalArgs.push(...this.opts.target.targets.map(x => this.fixTarget(x.target)))
+        break
+      case 'component':
+        this.cabalArgs.push(this.fixTarget(this.opts.target.component))
+        break
+      case 'auto':
+        break
     }
   }
 
