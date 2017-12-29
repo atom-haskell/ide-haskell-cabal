@@ -5,7 +5,7 @@ import * as Util from 'atom-haskell-utils'
 import { TargetParamType, CabalCommand, TargetParamTypeForBuilder } from './common'
 import * as UPI from 'atom-haskell-upi'
 
-interface BuilderParamType { name: string }
+interface BuilderParamType { name: 'cabal' | 'stack' | 'cabal-nix' | 'none' }
 
 function isCabalFile(file?: File | Directory): file is File {
   return !!(file && file.isFile() && file.getBaseName().endsWith('.cabal'))
@@ -121,7 +121,7 @@ export class IdeBackend {
   private builderParamInfo(): UPI.IParamSpec<BuilderParamType> {
     return {
       items: (): BuilderParamType[] => {
-        const builders = [{ name: 'cabal' }, { name: 'stack' }]
+        const builders: BuilderParamType[] = [{ name: 'cabal' }, { name: 'stack' }]
         if (atom.config.get('ide-haskell-cabal.enableNixBuild')) {
           builders.push({ name: 'cabal-nix' })
         }
