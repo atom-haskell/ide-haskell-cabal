@@ -7,8 +7,8 @@ import { Directory } from 'atom'
 export { IParams }
 
 export interface CtorOpts {
-  opts: IParams,
-  target: TargetParamTypeForBuilder,
+  opts: IParams
+  target: TargetParamTypeForBuilder
   cabalRoot: Directory
 }
 
@@ -17,16 +17,17 @@ export interface ResultType {
   hasError: boolean
 }
 
-export type TBuilderBase = {[K in CabalCommand]: () => Promise<ResultType>}
+export type TBuilderBase = { [K in CabalCommand]: () => Promise<ResultType> }
 
 export abstract class BuilderBase implements TBuilderBase {
   protected cabalArgs: string[]
-  protected spawnOpts: { cwd: string, detached: boolean, env: { [key: string]: string | undefined } }
+  protected spawnOpts: {
+    cwd: string
+    detached: boolean
+    env: { [key: string]: string | undefined }
+  }
 
-  constructor(
-    private processName: string,
-    protected opts: CtorOpts,
-  ) {
+  constructor(private processName: string, protected opts: CtorOpts) {
     this.spawnOpts = this.getSpawnOpts()
     this.cabalArgs = []
   }
@@ -42,7 +43,12 @@ export abstract class BuilderBase implements TBuilderBase {
   public abstract deps(): Promise<ResultType>
 
   protected async runCabal(extraArgs: string[] = []): Promise<ResultType> {
-    return runCabalProcess(this.processName, this.cabalArgs.concat(extraArgs), this.spawnOpts, this.opts.opts)
+    return runCabalProcess(
+      this.processName,
+      this.cabalArgs.concat(extraArgs),
+      this.spawnOpts,
+      this.opts.opts,
+    )
   }
 
   protected getConfigOpt<K extends keyof GHCVerProps>(opt: K): GHCVerProps[K] {
@@ -96,7 +102,9 @@ export abstract class BuilderBase implements TBuilderBase {
     if (this.getConfigOpt('pathExclusive')) {
       env['PATH'] = ghcPath.join(delimiter)
     } else if (ghcPath) {
-      env['PATH'] = ghcPath.concat((env['PATH'] || '').split(delimiter)).join(delimiter)
+      env['PATH'] = ghcPath
+        .concat((env['PATH'] || '').split(delimiter))
+        .join(delimiter)
     }
 
     // Set sandbox file (if specified)

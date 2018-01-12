@@ -2,10 +2,16 @@ import * as path from 'path'
 import { File, CompositeDisposable, Disposable, Directory } from 'atom'
 import * as Builders from './builders'
 import * as Util from 'atom-haskell-utils'
-import { TargetParamType, CabalCommand, TargetParamTypeForBuilder } from './common'
+import {
+  TargetParamType,
+  CabalCommand,
+  TargetParamTypeForBuilder,
+} from './common'
 import * as UPI from 'atom-haskell-upi'
 
-interface BuilderParamType { name: 'cabal' | 'stack' | 'cabal-nix' | 'none' }
+interface BuilderParamType {
+  name: 'cabal' | 'stack' | 'cabal-nix' | 'none'
+}
 
 function isCabalFile(file?: File | Directory): file is File {
   return !!(file && file.isFile() && file.getBaseName().endsWith('.cabal'))
@@ -19,14 +25,14 @@ interface ICommandOptions {
 
 type TBuilders = {
   [k: string]:
-  typeof Builders.CabalNix |
-  typeof Builders.Cabal |
-  typeof Builders.Stack |
-  typeof Builders.None |
-  undefined
+    | typeof Builders.CabalNix
+    | typeof Builders.Cabal
+    | typeof Builders.Stack
+    | typeof Builders.None
+    | undefined
 }
 
-const commandOptions: {[K in CabalCommand]: ICommandOptions} = {
+const commandOptions: { [K in CabalCommand]: ICommandOptions } = {
   build: {
     messageTypes: ['error', 'warning', 'build'],
     defaultSeverity: 'build',
@@ -71,8 +77,14 @@ export class IdeBackend {
     { label: 'Test', command: 'ide-haskell-cabal:test' },
     { label: 'Bench', command: 'ide-haskell-cabal:bench' },
     { label: 'Build Dependencies', command: 'ide-haskell-cabal:deps' },
-    { label: 'Set Active Builder', command: 'ide-haskell-cabal:set-active-builder' },
-    { label: 'Set Build Target', command: 'ide-haskell-cabal:set-build-target' },
+    {
+      label: 'Set Active Builder',
+      command: 'ide-haskell-cabal:set-active-builder',
+    },
+    {
+      label: 'Set Build Target',
+      command: 'ide-haskell-cabal:set-build-target',
+    },
   ]
   constructor(reg: UPI.IUPIRegistration) {
     this.upi = reg({
@@ -112,8 +124,7 @@ export class IdeBackend {
   private cabalCommands() {
     const ret = {}
     for (const cmd of Object.keys(commandOptions)) {
-      ret[`ide-haskell-cabal:${cmd}`] = async () =>
-        this.runCabalCommand(cmd)
+      ret[`ide-haskell-cabal:${cmd}`] = async () => this.runCabalCommand(cmd)
     }
     return ret
   }
@@ -121,15 +132,20 @@ export class IdeBackend {
   private builderParamInfo(): UPI.IParamSpec<BuilderParamType> {
     return {
       items: (): BuilderParamType[] => {
-        const builders: BuilderParamType[] = [{ name: 'cabal' }, { name: 'stack' }]
+        const builders: BuilderParamType[] = [
+          { name: 'cabal' },
+          { name: 'stack' },
+        ]
         if (atom.config.get('ide-haskell-cabal.enableNixBuild')) {
           builders.push({ name: 'cabal-nix' })
         }
         builders.push({ name: 'none' })
         return builders
       },
-      itemTemplate: (item: BuilderParamType) => `<li><div class='name'>${item.name}</div></li>`,
-      displayTemplate: (item?: BuilderParamType) => item && item.name ? item.name : 'Not set',
+      itemTemplate: (item: BuilderParamType) =>
+        `<li><div class='name'>${item.name}</div></li>`,
+      displayTemplate: (item?: BuilderParamType) =>
+        item && item.name ? item.name : 'Not set',
       itemFilterKey: 'name',
       description: 'Select builder to use with current project',
     }
@@ -147,7 +163,9 @@ export class IdeBackend {
         const projects: TargetParamType[] = [defaultVal]
         for (const d of atom.project.getDirectories()) {
           const dir = d.getPath()
-          const [cabalFile] = (await Util.getRootDir(dir)).getEntriesSync().filter(isCabalFile)
+          const [cabalFile] = (await Util.getRootDir(dir))
+            .getEntriesSync()
+            .filter(isCabalFile)
           if (cabalFile && cabalFile.isFile()) {
             const data = await cabalFile.read()
             const project = await Util.parseDotCabal(data)
@@ -230,12 +248,18 @@ export class IdeBackend {
     return atom.project.getPaths()[0] || process.cwd()
   }
 
-  private async getActiveProjectTarget(cabalfile: string, cabalRoot: Directory): Promise<string[]> {
+  private async getActiveProjectTarget(
+    cabalfile: string,
+    cabalRoot: Directory,
+  ): Promise<string[]> {
     const editor = atom.workspace.getActiveTextEditor()
     if (editor) {
       const edpath = editor.getPath()
       if (edpath) {
-        const res = await Util.getComponentFromFile(cabalfile, cabalRoot.relativize(edpath))
+        const res = await Util.getComponentFromFile(
+          cabalfile,
+          cabalRoot.relativize(edpath),
+        )
         if (res) return res
         else return []
       }
@@ -244,19 +268,31 @@ export class IdeBackend {
     return []
   }
 
-  private async cabalBuild(cmd: CabalCommand, opts: Builders.IParams): Promise<void> {
+  private async cabalBuild(
+    cmd: CabalCommand,
+    opts: Builders.IParams,
+  ): Promise<void> {
     try {
       if (this.running) {
-        this.upi.setStatus({ status: 'warning', detail: 'Builder already running' })
+        this.upi.setStatus({
+          status: 'warning',
+          detail: 'Builder already running',
+        })
         return
       }
       this.running = true
 
-      const builderParam = await this.upi.getConfigParam<BuilderParamType>('builder')
+      const builderParam = await this.upi.getConfigParam<BuilderParamType>(
+        'builder',
+      )
       const target = await this.upi.getConfigParam<TargetParamType>('target')
 
-      if (target === undefined) { throw new Error('Target undefined') }
-      if (builderParam === undefined) { throw new Error('Builder undefined') }
+      if (target === undefined) {
+        throw new Error('Target undefined')
+      }
+      if (builderParam === undefined) {
+        throw new Error('Builder undefined')
+      }
 
       this.upi.setStatus({
         status: 'progress',
@@ -264,11 +300,15 @@ export class IdeBackend {
         detail: '',
       })
 
-      const cabalRoot = await Util.getRootDir(target.dir ? target.dir : this.getActiveProjectPath())
+      const cabalRoot = await Util.getRootDir(
+        target.dir ? target.dir : this.getActiveProjectPath(),
+      )
 
       const [cabalFile]: File[] = cabalRoot.getEntriesSync().filter(isCabalFile)
 
-      if (!cabalFile) { throw new Error('No cabal file found') }
+      if (!cabalFile) {
+        throw new Error('No cabal file found')
+      }
 
       let newTarget: TargetParamTypeForBuilder | undefined
 
@@ -311,24 +351,38 @@ export class IdeBackend {
       }
       const builders: TBuilders = {
         'cabal-nix': Builders.CabalNix,
-        'cabal': Builders.Cabal,
-        'stack': Builders.Stack,
-        'none': Builders.None,
+        cabal: Builders.Cabal,
+        stack: Builders.Stack,
+        none: Builders.None,
       }
       const builder = builders[builderParam.name]
 
       if (builder === undefined) {
-        throw new Error(`Unknown builder '${(builderParam && builderParam.name) || builderParam}'`)
+        throw new Error(
+          `Unknown builder '${(builderParam && builderParam.name) ||
+            builderParam}'`,
+        )
       }
 
-      const res = await (new builder({ opts, target: newTarget, cabalRoot })).runCommand(cmd)
+      const res = await new builder({
+        opts,
+        target: newTarget,
+        cabalRoot,
+      }).runCommand(cmd)
       // see CabalProcess for explaination
       // tslint:disable-next-line: no-null-keyword
-      if (res.exitCode === null) { // this means process was killed
-        this.upi.setStatus({ status: 'warning', detail: 'Build was interrupted' })
+      if (res.exitCode === null) {
+        // this means process was killed
+        this.upi.setStatus({
+          status: 'warning',
+          detail: 'Build was interrupted',
+        })
       } else if (res.exitCode !== 0) {
         if (res.hasError) {
-          this.upi.setStatus({ status: 'warning', detail: 'There were errors in source files' })
+          this.upi.setStatus({
+            status: 'warning',
+            detail: 'There were errors in source files',
+          })
         } else {
           this.upi.setStatus({
             status: 'error',
@@ -345,7 +399,10 @@ export class IdeBackend {
         // tslint:disable-next-line: no-unsafe-any
         this.upi.setStatus({ status: 'error', detail: error.toString() })
       } else {
-        this.upi.setStatus({ status: 'warning', detail: 'Build failed with no errors' })
+        this.upi.setStatus({
+          status: 'warning',
+          detail: 'Build failed with no errors',
+        })
       }
     }
     this.running = false
@@ -360,29 +417,33 @@ export class IdeBackend {
 
     await this.cabalBuild(command, {
       severity: defaultSeverity,
-      setCancelAction:
-      canCancel ?
-        (action: () => void) => {
-          cancelActionDisp && cancelActionDisp.dispose()
-          cancelActionDisp = this.upi.addPanelControl({
-            element: 'ide-haskell-button',
-            opts: {
-              classes: ['cancel'],
-              events: {
-                click: action,
+      setCancelAction: canCancel
+        ? (action: () => void) => {
+            cancelActionDisp && cancelActionDisp.dispose()
+            cancelActionDisp = this.upi.addPanelControl({
+              element: 'ide-haskell-button',
+              opts: {
+                classes: ['cancel'],
+                events: {
+                  click: action,
+                },
               },
-            },
-          })
-        } : undefined,
+            })
+          }
+        : undefined,
       onMsg: (message: UPI.IResultItem) => {
         if (messageTypes.includes(message.severity)) {
           messages.push(message)
           this.upi.setMessages(messages)
         }
       },
-      onProgress:
-      canCancel
-        ? (progress: number) => this.upi.setStatus({ status: 'progress', progress, detail: `${command} in progress` })
+      onProgress: canCancel
+        ? (progress: number) =>
+            this.upi.setStatus({
+              status: 'progress',
+              progress,
+              detail: `${command} in progress`,
+            })
         : undefined,
     })
     cancelActionDisp && cancelActionDisp.dispose()

@@ -6,10 +6,14 @@ export { config } from './config'
 
 let disposables: CompositeDisposable | undefined
 
-export function activate() { /* noop */ }
+export function activate() {
+  /* noop */
+}
 
 export function deactivate() {
-  if (disposables) { disposables.dispose() }
+  if (disposables) {
+    disposables.dispose()
+  }
   disposables = undefined
 }
 

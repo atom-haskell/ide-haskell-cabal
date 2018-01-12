@@ -30,9 +30,10 @@ const ghcVerProps = {
 
 export const config = {
   enableNixBuild: {
-    description: 'Enable technical preview for cabal new-build introduced '
-    + 'with cabal-1.24. WARNING: this will break ghc-mod! Do not '
-    + 'enable unless you know what you are doing!',
+    description:
+      'Enable technical preview for cabal new-build introduced ' +
+      'with cabal-1.24. WARNING: this will break ghc-mod! Do not ' +
+      'enable unless you know what you are doing!',
     type: 'boolean',
     default: false,
     order: 0,
@@ -72,7 +73,8 @@ export const config = {
       },
       depsArguments: {
         type: 'array',
-        description: 'Stack install --only-dependencies command arguments (comma-separated)',
+        description:
+          'Stack install --only-dependencies command arguments (comma-separated)',
         default: [],
         order: 50,
       },
@@ -84,8 +86,9 @@ export const config = {
       ignoreNoSandbox: {
         type: 'boolean',
         title: 'Install dependencies with no sandbox',
-        description: 'Installing dependencies with no project sandbox is not '
-        + 'recommended, but you can do it if you enable this option',
+        description:
+          'Installing dependencies with no project sandbox is not ' +
+          'recommended, but you can do it if you enable this option',
         default: false,
       },
       activeGhcVersion: {

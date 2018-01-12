@@ -8,7 +8,13 @@ declare interface GHCVerProps {
 declare namespace AtomTypes {
   interface ConfigInterface {
     'ide-haskell-cabal.enableNixBuild': boolean
-    'ide-haskell-cabal.cabal.activeGhcVersion': '7.2' | '7.4' | '7.6' | '7.8' | '7.10' | '8.0'
+    'ide-haskell-cabal.cabal.activeGhcVersion':
+      | '7.2'
+      | '7.4'
+      | '7.6'
+      | '7.8'
+      | '7.10'
+      | '8.0'
     'ide-haskell-cabal.cabal.ignoreNoSandbox': 'boolean'
     'ide-haskell-cabal.cabal.ghc702': GHCVerProps
     'ide-haskell-cabal.cabal.ghc704': GHCVerProps

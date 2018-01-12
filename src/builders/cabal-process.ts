@@ -10,17 +10,22 @@ import { Directory, Point } from 'atom'
 export interface IParams {
   onMsg?: (msg: UPI.IResultItem) => void
   onProgress?: (progress: number) => void
-  onDone?: (done: { exitCode: number, hasError: boolean }) => void
+  onDone?: (done: { exitCode: number; hasError: boolean }) => void
   setCancelAction?: (action: () => void) => void
   severity: UPI.TSeverity
-  severityChangeRx?: {[K in UPI.TSeverity]: RegExp }
+  severityChangeRx?: { [K in UPI.TSeverity]: RegExp }
 }
 
 class CabalProcess {
   private cwd: Directory
   private hasError: boolean
 
-  constructor(command: string, args: string[], options: child_process.SpawnOptions, private params: IParams) {
+  constructor(
+    command: string,
+    args: string[],
+    options: child_process.SpawnOptions,
+    private params: IParams,
+  ) {
     this.cwd = new Directory(options.cwd || '.')
     // cabal returns failure when there are type errors _or_ when it can't
     // compile the code at all (i.e., when there are missing dependencies).
@@ -38,8 +43,9 @@ class CabalProcess {
         // ^ The only place where we get os-specific EOL (CR/CRLF/LF)
         // in the rest of the code we're using just LF (\n)
         buffer += first
-        if (tail.length > 0) { // it means there's at least one newline
-          const lines = [buffer, ...(tail.slice(0, -1))]
+        if (tail.length > 0) {
+          // it means there's at least one newline
+          const lines = [buffer, ...tail.slice(0, -1)]
           buffer = tail.slice(-1)[0]
           handleOutput(lines)
         }
@@ -58,7 +64,7 @@ class CabalProcess {
         if (tail.length > 0) {
           const last = tail.slice(-1)[0]
           buffer = last.split('\n')
-          for (const block of [first, ...(tail.slice(0, -1))]) {
+          for (const block of [first, ...tail.slice(0, -1)]) {
             handleOutput(block)
           }
         }
@@ -67,9 +73,21 @@ class CabalProcess {
 
     if (this.params.setCancelAction) {
       this.params.setCancelAction(() => {
-        try { kill(-proc.pid) } catch (e) { /*noop*/ }
-        try { kill(proc.pid) } catch (e) { /*noop*/ }
-        try { proc.kill() } catch (e) { /*noop*/ }
+        try {
+          kill(-proc.pid)
+        } catch (e) {
+          /*noop*/
+        }
+        try {
+          kill(proc.pid)
+        } catch (e) {
+          /*noop*/
+        }
+        try {
+          proc.kill()
+        } catch (e) {
+          /*noop*/
+        }
       })
     }
 
@@ -88,19 +106,23 @@ class CabalProcess {
     proc.stderr.on('data', blockBuffered(handleMessage))
 
     proc.on('close', (exitCode) => {
-      if (this.params.onDone) { this.params.onDone({ exitCode, hasError: this.hasError }) }
+      if (this.params.onDone) {
+        this.params.onDone({ exitCode, hasError: this.hasError })
+      }
     })
   }
 
   private unindentMessage(lines: string[]) {
-    const minIndent = Math.min(...(lines.map((line) => {
-      const match = line.match(/^\s*/)
-      if (match) {
-        return match[0].length
-      } else {
-        return 0
-      }
-    })))
+    const minIndent = Math.min(
+      ...lines.map((line) => {
+        const match = line.match(/^\s*/)
+        if (match) {
+          return match[0].length
+        } else {
+          return 0
+        }
+      }),
+    )
     return lines.map((line) => line.slice(minIndent)).join('\n')
   }
 
@@ -135,7 +157,9 @@ class CabalProcess {
   }
 
   private checkSeverityChange(data: string) {
-    if (!this.params.severityChangeRx) { return }
+    if (!this.params.severityChangeRx) {
+      return
+    }
     for (const [sev, rx] of Object.entries(this.params.severityChangeRx)) {
       if (data.match(rx)) {
         this.params.severity = sev
@@ -149,16 +173,20 @@ class CabalProcess {
     if (match) {
       const progress = match[1]
       const total = match[2]
-      this.params.onProgress && this.params.onProgress(parseInt(progress, 10) / parseInt(total, 10))
+      this.params.onProgress &&
+        this.params.onProgress(parseInt(progress, 10) / parseInt(total, 10))
     }
   }
 }
 
 export async function runCabalProcess(
-  command: string, args: string[], options: child_process.SpawnOptions, pars: IParams,
+  command: string,
+  args: string[],
+  options: child_process.SpawnOptions,
+  pars: IParams,
 ) {
   const newPars: IParams = { ...pars }
-  return new Promise<{ exitCode: number, hasError: boolean }>((resolve) => {
+  return new Promise<{ exitCode: number; hasError: boolean }>((resolve) => {
     newPars.onDone = resolve
     // tslint:disable-next-line: no-unused-expression
     new CabalProcess(command, args, options, newPars)
