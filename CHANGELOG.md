@@ -1,3 +1,8 @@
+## 2.1.1
+* Fix stack clean command
+* Prettier, bump dependencies, minimal spec
+* Stricter BuilderParamType
+
 ## 2.1.0
 * Add dependency on tslib
 * Bump minimal Atom version to 1.22
