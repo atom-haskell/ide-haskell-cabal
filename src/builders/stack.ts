@@ -33,7 +33,7 @@ export class Builder extends BuilderBase {
   }
   public async clean() {
     this.cabalArgs.push('clean')
-    this.component()
+    this.project()
     this.cabalArgs.push(
       ...(atom.config.get('ide-haskell-cabal.stack.cleanArguments') || []),
     )
@@ -53,6 +53,17 @@ export class Builder extends BuilderBase {
       comp = 'lib'
     }
     return `${this.opts.target.project}:${comp}`
+  }
+
+  private project() {
+    switch (this.opts.target.type) {
+      case 'all':
+      case 'component':
+        this.cabalArgs.push(this.opts.target.project)
+        break
+      case 'auto':
+        break
+    }
   }
 
   private component() {
