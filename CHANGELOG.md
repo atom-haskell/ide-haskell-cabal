@@ -1,3 +1,7 @@
+## 2.1.2
+
+-  Build whole project on stack test\/bench
+
 ## 2.1.1
 * Fix stack clean command
 * Prettier, bump dependencies, minimal spec
