@@ -17,7 +17,7 @@ export class Builder extends BuilderBase {
   }
   public async test() {
     this.cabalArgs.push('test')
-    this.component()
+    this.project()
     this.cabalArgs.push(
       ...(atom.config.get('ide-haskell-cabal.stack.testArguments') || []),
     )
@@ -25,7 +25,7 @@ export class Builder extends BuilderBase {
   }
   public async bench() {
     this.cabalArgs.push('bench')
-    this.component()
+    this.project()
     this.cabalArgs.push(
       ...(atom.config.get('ide-haskell-cabal.stack.benchArguments') || []),
     )
@@ -86,6 +86,7 @@ export class Builder extends BuilderBase {
     this.opts.opts.severity = 'build'
     const res = await this.runCabal(['--no-run-tests', '--no-run-benchmarks'])
     this.opts.opts.severity = oldSeverity
+    console.error(res.exitCode)
     if (res.exitCode !== 0) {
       return res
     } else {
