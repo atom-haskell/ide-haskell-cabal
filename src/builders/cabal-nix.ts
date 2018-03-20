@@ -1,11 +1,12 @@
-import { CtorOpts, BuilderBase, ResultType } from './base'
+import { CtorOpts, ResultType } from './base'
+import { CabalBase } from './cabal-base'
 
-export class Builder extends BuilderBase {
+export class Builder extends CabalBase {
   // TODO:
   //   * Commands other than 'build'
   //   * Support for buildDir
   constructor(opts: CtorOpts) {
-    super('cabal', opts)
+    super(opts)
   }
 
   public async build() {
@@ -42,18 +43,5 @@ export class Builder extends BuilderBase {
       "Command 'deps' is not implemented for cabal-nix",
     )
     throw new Error("Command 'deps' is not implemented for cabal-nix")
-  }
-
-  private component() {
-    switch (this.opts.target.type) {
-      case 'all':
-        this.cabalArgs.push(...this.opts.target.targets.map((x) => x.target))
-        break
-      case 'component':
-        this.cabalArgs.push(this.opts.target.component)
-        break
-      case 'auto':
-        break
-    }
   }
 }

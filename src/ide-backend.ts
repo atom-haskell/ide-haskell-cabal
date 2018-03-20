@@ -23,14 +23,14 @@ interface ICommandOptions {
   canCancel: boolean
 }
 
-type TBuilders = {
-  [k: string]:
-    | typeof Builders.CabalNix
-    | typeof Builders.Cabal
-    | typeof Builders.Stack
-    | typeof Builders.None
-    | undefined
+interface BuilderConstructor {
+  new (opts: Builders.CtorOpts): Builders.Builder
 }
+
+type TBuilders = Record<
+  BuilderParamType['name'],
+  BuilderConstructor | undefined
+>
 
 const commandOptions: { [K in CabalCommand]: ICommandOptions } = {
   build: {

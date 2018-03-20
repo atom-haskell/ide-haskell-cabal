@@ -17,7 +17,9 @@ export interface ResultType {
   hasError: boolean
 }
 
-export type TBuilderBase = { [K in CabalCommand]: () => Promise<ResultType> }
+export type TBuilderBase = Record<CabalCommand, () => Promise<ResultType>> & {
+  runCommand(cmd: CabalCommand): Promise<ResultType>
+}
 
 export abstract class BuilderBase implements TBuilderBase {
   protected cabalArgs: string[]
@@ -51,19 +53,10 @@ export abstract class BuilderBase implements TBuilderBase {
     )
   }
 
-  protected getConfigOpt<K extends keyof GHCVerProps>(opt: K): GHCVerProps[K] {
-    const map = {
-      '7.2': atom.config.get('ide-haskell-cabal.cabal.ghc702'),
-      '7.4': atom.config.get('ide-haskell-cabal.cabal.ghc704'),
-      '7.6': atom.config.get('ide-haskell-cabal.cabal.ghc706'),
-      '7.8': atom.config.get('ide-haskell-cabal.cabal.ghc708'),
-      '7.10': atom.config.get('ide-haskell-cabal.cabal.ghc710'),
-      '8.0': atom.config.get('ide-haskell-cabal.cabal.ghc800'),
-    }
-    return map[atom.config.get('ide-haskell-cabal.cabal.activeGhcVersion')][opt]
+  protected additionalEnvSetup(env: typeof process.env): typeof process.env {
+    return env
   }
 
-  /* tslint:disable: no-string-literal */
   private getSpawnOpts() {
     // Setup default opts
     const opts = {
@@ -94,27 +87,10 @@ export abstract class BuilderBase implements TBuilderBase {
           path.push(evn)
         }
       }
-      env['PATH'] = path.join(delimiter)
+      env.PATH = path.join(delimiter)
     }
 
-    // set PATH depending on config settings
-    const ghcPath = this.getConfigOpt('pathTo')
-    if (this.getConfigOpt('pathExclusive')) {
-      env['PATH'] = ghcPath.join(delimiter)
-    } else if (ghcPath) {
-      env['PATH'] = ghcPath
-        .concat((env['PATH'] || '').split(delimiter))
-        .join(delimiter)
-    }
-
-    // Set sandbox file (if specified)
-    const sandboxConfig = this.getConfigOpt('sandbox')
-    if (sandboxConfig !== '') {
-      env['CABAL_SANDBOX_CONFIG'] = sandboxConfig
-    }
-
-    opts.env = env
+    opts.env = this.additionalEnvSetup(env)
     return opts
   }
-  /* tslint:enable: no-string-literal */
 }
