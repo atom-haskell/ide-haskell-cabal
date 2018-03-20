@@ -40,7 +40,7 @@
     }
   },
   "devDependencies": {
-    "@types/atom": "^1.23.1",
+    "@types/atom": "~1.23.1",
     "@types/chai": "^4.1.0",
     "@types/mocha": "^2.2.46",
     "@types/node": "^7",
