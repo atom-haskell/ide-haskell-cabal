@@ -17,11 +17,11 @@ export interface ResultType {
   hasError: boolean
 }
 
-export type TBuilderBase = Record<CabalCommand, () => Promise<ResultType>> & {
+export type Builder = Record<CabalCommand, () => Promise<ResultType>> & {
   runCommand(cmd: CabalCommand): Promise<ResultType>
 }
 
-export abstract class BuilderBase implements TBuilderBase {
+export abstract class BuilderBase implements Builder {
   protected cabalArgs: string[]
   protected spawnOpts: {
     cwd: string
