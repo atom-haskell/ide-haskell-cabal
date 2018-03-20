@@ -16,7 +16,7 @@ export interface IParams {
   severityChangeRx?: { [K in UPI.TSeverity]: RegExp }
 }
 
-class CabalProcess {
+class BuilderProcess {
   private cwd: Directory
   private hasError: boolean
 
@@ -179,7 +179,7 @@ class CabalProcess {
   }
 }
 
-export async function runCabalProcess(
+export async function runProcess(
   command: string,
   args: string[],
   options: child_process.SpawnOptions,
@@ -189,6 +189,6 @@ export async function runCabalProcess(
   return new Promise<{ exitCode: number; hasError: boolean }>((resolve) => {
     newPars.onDone = resolve
     // tslint:disable-next-line: no-unused-expression
-    new CabalProcess(command, args, options, newPars)
+    new BuilderProcess(command, args, options, newPars)
   })
 }

@@ -1,4 +1,4 @@
-import { CtorOpts, BuilderBase } from './base'
+import { CtorOpts, BuilderBase } from './index'
 import { delimiter } from 'path'
 
 export abstract class CabalBase extends BuilderBase {

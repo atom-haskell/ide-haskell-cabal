@@ -1,5 +1,5 @@
 import { CtorOpts, ResultType } from './base'
-import { CabalBase } from './cabal-base'
+import { CabalBase } from './base/cabal'
 
 export class Builder extends CabalBase {
   // TODO:

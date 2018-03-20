@@ -1,8 +1,8 @@
 import { delimiter } from 'path'
 
-import { CabalCommand, TargetParamTypeForBuilder } from './../common'
+import { CabalCommand, TargetParamTypeForBuilder } from '../../common'
 
-import { runCabalProcess, IParams } from './cabal-process'
+import { runProcess, IParams } from './process'
 import { Directory } from 'atom'
 export { IParams }
 
@@ -45,7 +45,7 @@ export abstract class BuilderBase implements TBuilderBase {
   public abstract deps(): Promise<ResultType>
 
   protected async runCabal(extraArgs: string[] = []): Promise<ResultType> {
-    return runCabalProcess(
+    return runProcess(
       this.processName,
       this.cabalArgs.concat(extraArgs),
       this.spawnOpts,

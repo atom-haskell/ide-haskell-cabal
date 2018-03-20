@@ -1,6 +1,6 @@
 import { CtorOpts } from './base'
-import { runCabalProcess } from './cabal-process'
-import { CabalBase } from './cabal-base'
+import { runProcess } from './base/process'
+import { CabalBase } from './base/cabal'
 
 export class Builder extends CabalBase {
   constructor(opts: CtorOpts) {
@@ -94,7 +94,7 @@ export class Builder extends CabalBase {
   }
 
   private async createSandbox() {
-    return runCabalProcess(
+    return runProcess(
       'cabal',
       ['sandbox', 'init'],
       this.spawnOpts,
