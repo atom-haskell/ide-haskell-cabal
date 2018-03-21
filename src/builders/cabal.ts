@@ -1,6 +1,6 @@
 import { CtorOpts } from './base'
 import { runProcess } from './base/process'
-import { CabalBase } from './base/cabal'
+import { CabalBase, getCabalOpts } from './base/cabal'
 
 export class Builder extends CabalBase {
   constructor(opts: CtorOpts) {
@@ -86,7 +86,7 @@ export class Builder extends CabalBase {
     env = super.additionalEnvSetup(env)
 
     // Set sandbox file (if specified)
-    const sandboxConfig = this.cabalOpts.sandbox
+    const sandboxConfig = getCabalOpts().sandbox
     if (sandboxConfig !== '') {
       env.CABAL_SANDBOX_CONFIG = sandboxConfig
     }
@@ -103,7 +103,7 @@ export class Builder extends CabalBase {
   }
 
   private async commonBuild() {
-    this.cabalArgs.push('--builddir=' + this.cabalOpts.buildDir)
+    this.cabalArgs.push('--builddir=' + getCabalOpts().buildDir)
     return this.runCabal()
   }
 }

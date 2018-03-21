@@ -5,13 +5,12 @@ import { ConfigValues } from 'atom'
 type GHCVerProps = ConfigValues['ide-haskell-cabal']['cabal']['ghc800']
 
 export abstract class CabalBase extends BuilderBase {
-  protected readonly cabalOpts = getCabalOpts()
   constructor(opts: CtorOpts) {
     super('cabal', opts)
   }
 
   protected additionalEnvSetup(env: typeof process.env) {
-    const opts = this.cabalOpts
+    const opts = getCabalOpts()
     const ghcPath = opts.pathTo
     if (opts.pathExclusive) {
       env.PATH = ghcPath.join(delimiter)
