@@ -28,6 +28,18 @@ const ghcVerProps = {
   },
 }
 
+const ghcVersList = ['7.2', '7.4', '7.6', '7.8', '7.10', '8.0', '8.2']
+const ghcVersProps = {}
+for (const vers of ghcVersList) {
+  const [maj, min] = vers.split('.')
+  const key = `ghc${maj}${min.length === 1 ? `0${min}` : min}`
+  ghcVersProps[key] = {
+    type: 'object',
+    title: `GHC ${vers}`,
+    properties: ghcVerProps,
+  }
+}
+
 export const config = {
   enableNixBuild: {
     description:
@@ -95,43 +107,9 @@ export const config = {
         type: 'string',
         title: 'Active GHC version',
         default: '7.10',
-        enum: ['7.2', '7.4', '7.6', '7.8', '7.10', '8.0', '8.2'],
+        enum: ghcVersList,
       },
-      ghc702: {
-        type: 'object',
-        title: 'GHC 7.2',
-        properties: ghcVerProps,
-      },
-      ghc704: {
-        type: 'object',
-        title: 'GHC 7.4',
-        properties: ghcVerProps,
-      },
-      ghc706: {
-        type: 'object',
-        title: 'GHC 7.6',
-        properties: ghcVerProps,
-      },
-      ghc708: {
-        type: 'object',
-        title: 'GHC 7.8',
-        properties: ghcVerProps,
-      },
-      ghc710: {
-        type: 'object',
-        title: 'GHC 7.10',
-        properties: ghcVerProps,
-      },
-      ghc800: {
-        type: 'object',
-        title: 'GHC 8.0',
-        properties: ghcVerProps,
-      },
-      ghc802: {
-        type: 'object',
-        title: 'GHC 8.2',
-        properties: ghcVerProps,
-      },
+      ...ghcVersProps,
     },
   },
 }

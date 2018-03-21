@@ -1,11 +1,15 @@
 import { CtorOpts, BuilderBase } from './index'
 import { delimiter } from 'path'
+import { ConfigValues } from 'atom'
+
+type GHCVerList = ConfigValues['ide-haskell-cabal']['cabal']['activeGhcVersion']
+type GHCVerProps = ConfigValues['ide-haskell-cabal']['cabal']['ghc800']
 
 export abstract class CabalBase extends BuilderBase {
   protected cabalOpts: GHCVerProps
   constructor(opts: CtorOpts) {
     super('cabal', opts)
-    const map = {
+    const map: Record<GHCVerList, GHCVerProps> = {
       '7.2': atom.config.get('ide-haskell-cabal.cabal.ghc702'),
       '7.4': atom.config.get('ide-haskell-cabal.cabal.ghc704'),
       '7.6': atom.config.get('ide-haskell-cabal.cabal.ghc706'),
