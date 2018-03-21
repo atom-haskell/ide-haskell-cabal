@@ -2,24 +2,12 @@ import { CtorOpts, BuilderBase } from './index'
 import { delimiter } from 'path'
 import { ConfigValues } from 'atom'
 
-type GHCVerList = ConfigValues['ide-haskell-cabal']['cabal']['activeGhcVersion']
 type GHCVerProps = ConfigValues['ide-haskell-cabal']['cabal']['ghc800']
 
 export abstract class CabalBase extends BuilderBase {
-  protected cabalOpts: GHCVerProps
+  protected readonly cabalOpts = getCabalOpts()
   constructor(opts: CtorOpts) {
     super('cabal', opts)
-    const map: Record<GHCVerList, GHCVerProps> = {
-      '7.2': atom.config.get('ide-haskell-cabal.cabal.ghc702'),
-      '7.4': atom.config.get('ide-haskell-cabal.cabal.ghc704'),
-      '7.6': atom.config.get('ide-haskell-cabal.cabal.ghc706'),
-      '7.8': atom.config.get('ide-haskell-cabal.cabal.ghc708'),
-      '7.10': atom.config.get('ide-haskell-cabal.cabal.ghc710'),
-      '8.0': atom.config.get('ide-haskell-cabal.cabal.ghc800'),
-      '8.2': atom.config.get('ide-haskell-cabal.cabal.ghc802'),
-    }
-    this.cabalOpts =
-      map[atom.config.get('ide-haskell-cabal.cabal.activeGhcVersion')]
   }
 
   protected additionalEnvSetup(env: typeof process.env) {
@@ -48,4 +36,13 @@ export abstract class CabalBase extends BuilderBase {
         break
     }
   }
+}
+
+export function getCabalOpts(): GHCVerProps {
+  const vers = atom.config.get('ide-haskell-cabal.cabal.activeGhcVersion')
+  const [maj, min] = vers.split('.')
+  const key = `ide-haskell-cabal.cabal.ghc${maj}${
+    min.length === 1 ? `0${min}` : min
+  }`
+  return atom.config.get(key)
 }
