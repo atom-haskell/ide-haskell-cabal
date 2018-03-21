@@ -1,3 +1,12 @@
+## 2.2.0
+
+-   Code cleanup/refactor
+-   Bump dependencies
+-   Only apply cabal environment settings when running cabal
+-   Add GHC 8.2 to known GHC versions
+-   Use atom-ts-spec-runner
+-   Add test and bench for nix-build
+
 ## 2.1.2
 
 -   Build whole project on stack test/bench
