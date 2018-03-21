@@ -66,10 +66,12 @@ export class IdeBackend {
   private running: boolean = false
   private commands = {
     ...this.cabalCommands(),
-    'ide-haskell-cabal:set-build-target': async () =>
-      this.upi.setConfigParam('target'),
-    'ide-haskell-cabal:set-active-builder': async () =>
-      this.upi.setConfigParam('builder'),
+    'ide-haskell-cabal:set-build-target': async () => {
+      await this.upi.setConfigParam('target')
+    },
+    'ide-haskell-cabal:set-active-builder': async () => {
+      await this.upi.setConfigParam('builder')
+    },
   }
   private menu = [
     { label: 'Build Project', command: 'ide-haskell-cabal:build' },
@@ -168,6 +170,9 @@ export class IdeBackend {
             .filter(isCabalFile)
           if (cabalFile && cabalFile.isFile()) {
             const data = await cabalFile.read()
+            if (data === null) {
+              throw new Error(`Could not read cabalfile ${cabalFile.getPath()}`)
+            }
             const project = await Util.parseDotCabal(data)
             if (project) {
               projects.push({ project: project.name, dir, type: 'auto' })
@@ -314,6 +319,9 @@ export class IdeBackend {
 
       if (target.type === 'auto') {
         const cabalContents = await cabalFile.read()
+        if (cabalContents === null) {
+          throw new Error(`Could not read cabalfile ${cabalFile.getPath()}`)
+        }
         const tgts = await this.getActiveProjectTarget(cabalContents, cabalRoot)
         const [tgt] = tgts
         if (tgt) {
@@ -329,6 +337,9 @@ export class IdeBackend {
         }
       } else if (target.type === 'all') {
         const cabalContents = await cabalFile.read()
+        if (cabalContents === null) {
+          throw new Error(`Could not read cabalfile ${cabalFile.getPath()}`)
+        }
         const cf = await Util.parseDotCabal(cabalContents)
         if (cf) {
           newTarget = newTarget = {
