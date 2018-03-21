@@ -5,8 +5,8 @@ import { ConfigValues } from 'atom'
 type GHCVerProps = ConfigValues['ide-haskell-cabal']['cabal']['ghc800']
 
 export abstract class CabalBase extends BuilderBase {
-  constructor(opts: CtorOpts) {
-    super('cabal', opts)
+  constructor(opts: CtorOpts, globals: object = {}) {
+    super('cabal', opts, globals)
   }
 
   protected additionalEnvSetup(env: typeof process.env) {
