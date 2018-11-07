@@ -1,6 +1,10 @@
 ## 2.2.1
 
--  Add GHC 8.4 and GHC 8.6 to known GHC versions
+-   Tweak start-of-message regex for compatibility with new cabal
+-   Bump dependencies
+-   Add support for GHC 8.4 and 8.6
+-   BuilderBase spec
+-   Tweak & spec win32 path case routine; add DI capabilities to base classes
 
 ## 2.2.0
 
