@@ -28,7 +28,17 @@ const ghcVerProps = {
   },
 }
 
-const ghcVersList = ['7.2', '7.4', '7.6', '7.8', '7.10', '8.0', '8.2', '8.4', '8.6']
+const ghcVersList = [
+  '7.2',
+  '7.4',
+  '7.6',
+  '7.8',
+  '7.10',
+  '8.0',
+  '8.2',
+  '8.4',
+  '8.6',
+]
 const ghcVersProps = {}
 for (const vers of ghcVersList) {
   const [maj, min] = vers.split('.')
@@ -235,7 +245,16 @@ declare module 'atom' {
     }
     'ide-haskell-cabal.cabal': {
       ignoreNoSandbox: boolean
-      activeGhcVersion: '7.2' | '7.4' | '7.6' | '7.8' | '7.10' | '8.0' | '8.2' | '8.4' | '8.6'
+      activeGhcVersion:
+        | '7.2'
+        | '7.4'
+        | '7.6'
+        | '7.8'
+        | '7.10'
+        | '8.0'
+        | '8.2'
+        | '8.4'
+        | '8.6'
       'ghc702.pathExclusive': boolean
       'ghc702.pathTo': any[]
       'ghc702.sandbox': string
@@ -446,7 +465,16 @@ declare module 'atom' {
       }
       cabal: {
         ignoreNoSandbox: boolean
-        activeGhcVersion: '7.2' | '7.4' | '7.6' | '7.8' | '7.10' | '8.0' | '8.2' | '8.4' | '8.6'
+        activeGhcVersion:
+          | '7.2'
+          | '7.4'
+          | '7.6'
+          | '7.8'
+          | '7.10'
+          | '8.0'
+          | '8.2'
+          | '8.4'
+          | '8.6'
         'ghc702.pathExclusive': boolean
         'ghc702.pathTo': any[]
         'ghc702.sandbox': string
