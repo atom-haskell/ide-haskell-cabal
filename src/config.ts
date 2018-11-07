@@ -28,7 +28,7 @@ const ghcVerProps = {
   },
 }
 
-const ghcVersList = ['7.2', '7.4', '7.6', '7.8', '7.10', '8.0', '8.2']
+const ghcVersList = ['7.2', '7.4', '7.6', '7.8', '7.10', '8.0', '8.2', '8.4', '8.6']
 const ghcVersProps = {}
 for (const vers of ghcVersList) {
   const [maj, min] = vers.split('.')
@@ -141,6 +141,8 @@ declare module 'atom' {
       | '7.10'
       | '8.0'
       | '8.2'
+      | '8.4'
+      | '8.6'
     'ide-haskell-cabal.cabal.ghc702.pathExclusive': boolean
     'ide-haskell-cabal.cabal.ghc702.pathTo': any[]
     'ide-haskell-cabal.cabal.ghc702.sandbox': string
@@ -211,9 +213,29 @@ declare module 'atom' {
       sandbox: string
       buildDir: string
     }
+    'ide-haskell-cabal.cabal.ghc804.pathExclusive': boolean
+    'ide-haskell-cabal.cabal.ghc804.pathTo': any[]
+    'ide-haskell-cabal.cabal.ghc804.sandbox': string
+    'ide-haskell-cabal.cabal.ghc804.buildDir': string
+    'ide-haskell-cabal.cabal.ghc804': {
+      pathExclusive: boolean
+      pathTo: any[]
+      sandbox: string
+      buildDir: string
+    }
+    'ide-haskell-cabal.cabal.ghc806.pathExclusive': boolean
+    'ide-haskell-cabal.cabal.ghc806.pathTo': any[]
+    'ide-haskell-cabal.cabal.ghc806.sandbox': string
+    'ide-haskell-cabal.cabal.ghc806.buildDir': string
+    'ide-haskell-cabal.cabal.ghc806': {
+      pathExclusive: boolean
+      pathTo: any[]
+      sandbox: string
+      buildDir: string
+    }
     'ide-haskell-cabal.cabal': {
       ignoreNoSandbox: boolean
-      activeGhcVersion: '7.2' | '7.4' | '7.6' | '7.8' | '7.10' | '8.0' | '8.2'
+      activeGhcVersion: '7.2' | '7.4' | '7.6' | '7.8' | '7.10' | '8.0' | '8.2' | '8.4' | '8.6'
       'ghc702.pathExclusive': boolean
       'ghc702.pathTo': any[]
       'ghc702.sandbox': string
@@ -284,6 +306,26 @@ declare module 'atom' {
         sandbox: string
         buildDir: string
       }
+      'ghc804.pathExclusive': boolean
+      'ghc804.pathTo': any[]
+      'ghc804.sandbox': string
+      'ghc804.buildDir': string
+      ghc804: {
+        pathExclusive: boolean
+        pathTo: any[]
+        sandbox: string
+        buildDir: string
+      }
+      'ghc806.pathExclusive': boolean
+      'ghc806.pathTo': any[]
+      'ghc806.sandbox': string
+      'ghc806.buildDir': string
+      ghc806: {
+        pathExclusive: boolean
+        pathTo: any[]
+        sandbox: string
+        buildDir: string
+      }
     }
     'ide-haskell-cabal': {
       enableNixBuild: boolean
@@ -310,6 +352,8 @@ declare module 'atom' {
         | '7.10'
         | '8.0'
         | '8.2'
+        | '8.4'
+        | '8.6'
       'cabal.ghc702.pathExclusive': boolean
       'cabal.ghc702.pathTo': any[]
       'cabal.ghc702.sandbox': string
@@ -380,9 +424,29 @@ declare module 'atom' {
         sandbox: string
         buildDir: string
       }
+      'cabal.ghc804.pathExclusive': boolean
+      'cabal.ghc804.pathTo': any[]
+      'cabal.ghc804.sandbox': string
+      'cabal.ghc804.buildDir': string
+      'cabal.ghc804': {
+        pathExclusive: boolean
+        pathTo: any[]
+        sandbox: string
+        buildDir: string
+      }
+      'cabal.ghc806.pathExclusive': boolean
+      'cabal.ghc806.pathTo': any[]
+      'cabal.ghc806.sandbox': string
+      'cabal.ghc806.buildDir': string
+      'cabal.ghc806': {
+        pathExclusive: boolean
+        pathTo: any[]
+        sandbox: string
+        buildDir: string
+      }
       cabal: {
         ignoreNoSandbox: boolean
-        activeGhcVersion: '7.2' | '7.4' | '7.6' | '7.8' | '7.10' | '8.0' | '8.2'
+        activeGhcVersion: '7.2' | '7.4' | '7.6' | '7.8' | '7.10' | '8.0' | '8.2' | '8.4' | '8.6'
         'ghc702.pathExclusive': boolean
         'ghc702.pathTo': any[]
         'ghc702.sandbox': string
@@ -448,6 +512,26 @@ declare module 'atom' {
         'ghc802.sandbox': string
         'ghc802.buildDir': string
         ghc802: {
+          pathExclusive: boolean
+          pathTo: any[]
+          sandbox: string
+          buildDir: string
+        }
+        'ghc804.pathExclusive': boolean
+        'ghc804.pathTo': any[]
+        'ghc804.sandbox': string
+        'ghc804.buildDir': string
+        ghc804: {
+          pathExclusive: boolean
+          pathTo: any[]
+          sandbox: string
+          buildDir: string
+        }
+        'ghc806.pathExclusive': boolean
+        'ghc806.pathTo': any[]
+        'ghc806.sandbox': string
+        'ghc806.buildDir': string
+        ghc806: {
           pathExclusive: boolean
           pathTo: any[]
           sandbox: string

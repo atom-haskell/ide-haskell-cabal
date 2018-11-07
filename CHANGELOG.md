@@ -1,3 +1,7 @@
+## 2.2.1
+
+-  Add GHC 8.4 and GHC 8.6 to known GHC versions
+
 ## 2.2.0
 
 -   Code cleanup/refactor
