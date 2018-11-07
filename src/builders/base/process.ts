@@ -54,7 +54,7 @@ class BuilderProcess {
 
     const blockBuffered = (handleOutput: (block: string) => void) => {
       // Start of a Cabal message
-      const startOfMessage = /\n(?=\S)/g
+      const startOfMessage = /\n(?=\S)(?!\d+ \|)/g
       let buffer: string[] = []
       proc.on('close', () => handleOutput(buffer.join('\n')))
       return buffered((lines: string[]) => {
@@ -185,7 +185,7 @@ export async function runProcess(
   options: child_process.SpawnOptions,
   pars: IParams,
 ) {
-  const newPars: IParams = { ...pars }
+  const newPars: typeof pars = { ...pars }
   return new Promise<{ exitCode: number; hasError: boolean }>((resolve) => {
     newPars.onDone = resolve
     // tslint:disable-next-line: no-unused-expression
