@@ -3,49 +3,51 @@ import { CtorOpts, BuilderBase } from './base'
 export class Builder extends BuilderBase {
   constructor(opts: CtorOpts) {
     super('stack', opts)
-    this.cabalArgs =
-      atom.config.get('ide-haskell-cabal.stack.globalArguments') || []
   }
 
   public async build() {
-    this.cabalArgs.push('build')
-    this.component()
-    this.cabalArgs.push(
+    return this.runCommon([
+      'build',
+      ...this.component(),
       ...(atom.config.get('ide-haskell-cabal.stack.buildArguments') || []),
-    )
-    return this.runCabal(['--no-run-tests', '--no-run-benchmarks'])
+      '--no-run-tests',
+      '--no-run-benchmarks',
+    ])
   }
   public async test() {
-    this.cabalArgs.push('test')
-    this.project()
-    this.cabalArgs.push(
+    return this.runBuild([
+      'test',
+      ...this.project(),
       ...(atom.config.get('ide-haskell-cabal.stack.testArguments') || []),
-    )
-    return this.runBuild()
+    ])
   }
   public async bench() {
-    this.cabalArgs.push('bench')
-    this.project()
-    this.cabalArgs.push(
+    return this.runBuild([
+      'bench',
+      ...this.project(),
       ...(atom.config.get('ide-haskell-cabal.stack.benchArguments') || []),
-    )
-    return this.runBuild()
+    ])
   }
   public async clean() {
-    this.cabalArgs.push('clean')
-    this.project()
-    this.cabalArgs.push(
+    return this.runCommon([
+      'clean',
+      ...this.project(),
       ...(atom.config.get('ide-haskell-cabal.stack.cleanArguments') || []),
-    )
-    return this.runCabal()
+    ])
   }
   public async deps() {
-    this.cabalArgs.push('build', '--only-dependencies')
-    this.component()
-    this.cabalArgs.push(
+    return this.runCommon([
+      'build',
+      '--only-dependencies',
+      ...this.component(),
       ...(atom.config.get('ide-haskell-cabal.stack.depsArguments') || []),
-    )
-    return this.runCabal()
+    ])
+  }
+
+  private async runCommon(args: string[], overrides: {} = {}) {
+    const globalArgs =
+      atom.config.get('ide-haskell-cabal.stack.globalArguments') || []
+    return this.runCabal([...globalArgs, ...args], overrides)
   }
 
   private fixTarget(comp: string): string {
@@ -55,42 +57,39 @@ export class Builder extends BuilderBase {
     return `${this.opts.target.project}:${comp}`
   }
 
-  private project() {
+  private project(): string[] {
     switch (this.opts.target.type) {
       case 'all':
       case 'component':
-        this.cabalArgs.push(this.opts.target.project)
-        break
+        return [this.opts.target.project]
       case 'auto':
-        break
+        return []
     }
   }
 
-  private component() {
+  private component(): string[] {
     switch (this.opts.target.type) {
       case 'all':
-        this.cabalArgs.push(
-          ...this.opts.target.targets.map((x) => this.fixTarget(x.target)),
-        )
-        break
+        return this.opts.target.targets.map((x) => this.fixTarget(x.target))
       case 'component':
-        this.cabalArgs.push(this.fixTarget(this.opts.target.component))
-        break
+        return [this.fixTarget(this.opts.target.component)]
       case 'auto':
-        break
+        return []
     }
   }
 
-  private async runBuild() {
-    const oldSeverity = this.opts.opts.severity
-    this.opts.opts.severity = 'build'
-    const res = await this.runCabal(['--no-run-tests', '--no-run-benchmarks'])
-    this.opts.opts.severity = oldSeverity
-    console.error(res.exitCode)
+  private async runBuild(args: string[]) {
+    const res = await this.runCommon(
+      [...args, '--no-run-tests', '--no-run-benchmarks'],
+      {
+        severity: 'build',
+      },
+    )
     if (res.exitCode !== 0) {
+      console.error(res.exitCode)
       return res
     } else {
-      return this.runCabal()
+      return this.runCommon(args)
     }
   }
 }

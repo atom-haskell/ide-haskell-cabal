@@ -1,12 +1,16 @@
 import { CtorOpts, BuilderBase } from './index'
 import { delimiter } from 'path'
 import { ConfigValues } from 'atom'
+import child_process = require('child_process')
 
 type GHCVerProps = ConfigValues['ide-haskell-cabal']['cabal']['ghc800']
 
 export abstract class CabalBase extends BuilderBase {
+  protected versionPromise: Promise<string>
+
   constructor(opts: CtorOpts, globals: object = {}) {
     super('cabal', opts, globals)
+    this.versionPromise = this.getVersion()
   }
 
   protected additionalEnvSetup(env: typeof process.env) {
@@ -26,14 +30,28 @@ export abstract class CabalBase extends BuilderBase {
   protected component() {
     switch (this.opts.target.type) {
       case 'all':
-        this.cabalArgs.push(...this.opts.target.targets.map((x) => x.target))
-        break
+        return this.opts.target.targets.map((x) => x.target)
       case 'component':
-        this.cabalArgs.push(this.opts.target.component)
-        break
+        return [this.opts.target.component]
       case 'auto':
-        break
+        return []
     }
+  }
+
+  private getVersion() {
+    return new Promise<string>((resolve, reject) => {
+      child_process.execFile(
+        'cabal',
+        ['--numeric-version'],
+        this.spawnOpts,
+        (error, stdout) => {
+          if (error) reject(error)
+          else {
+            resolve(stdout)
+          }
+        },
+      )
+    })
   }
 }
 

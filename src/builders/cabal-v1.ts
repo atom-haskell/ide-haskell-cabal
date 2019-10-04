@@ -1,5 +1,5 @@
 import { CtorOpts } from './base'
-import { runProcess } from './base/process'
+import { runProcess, IParams } from './base/process'
 import { CabalBase, getCabalOpts } from './base/cabal'
 
 export class Builder extends CabalBase {
@@ -8,31 +8,26 @@ export class Builder extends CabalBase {
   }
 
   public async build() {
-    this.cabalArgs = ['build', '--only']
-    this.component()
-    return this.commonBuild()
+    return this.commonBuild('build', ['--only', ...this.component()])
   }
   public async test() {
-    this.opts.opts.severityChangeRx = {}
-    this.opts.opts.severityChangeRx[
-      this.opts.opts.severity
-    ] = /Running \d+ test suites\.\.\./
-    this.opts.opts.severity = 'build'
-    this.cabalArgs = ['test', '--only', '--show-details=always']
-    return this.commonBuild()
+    const severityChangeRx = {}
+    severityChangeRx[this.opts.opts.severity] = /Running \d+ test suites\.\.\./
+    return this.commonBuild('test', ['--only', '--show-details=always'], {
+      severityChangeRx,
+      severity: 'build',
+    })
   }
   public async bench() {
-    this.opts.opts.severityChangeRx = {}
-    this.opts.opts.severityChangeRx[
-      this.opts.opts.severity
-    ] = /Running \d+ benchmarks\.\.\./
-    this.opts.opts.severity = 'build'
-    this.cabalArgs = ['bench', '--only', '--show-details=always']
-    return this.commonBuild()
+    const severityChangeRx = {}
+    severityChangeRx[this.opts.opts.severity] = /Running \d+ benchmarks\.\.\./
+    return this.commonBuild('bench', ['--only', '--show-details=always'], {
+      severityChangeRx,
+      severity: 'build',
+    })
   }
   public async clean() {
-    this.cabalArgs = ['clean', '--save-configure']
-    return this.commonBuild()
+    return this.commonBuild('clean', ['--save-configure'])
   }
   public async deps() {
     const igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
@@ -73,13 +68,11 @@ export class Builder extends CabalBase {
         return res
       }
     }
-    this.cabalArgs = [
-      'install',
+    return this.commonBuild('install', [
       '--only-dependencies',
       '--enable-tests',
       '--enable-benchmarks',
-    ]
-    return this.commonBuild()
+    ])
   }
 
   protected additionalEnvSetup(env: typeof process.env) {
@@ -96,14 +89,35 @@ export class Builder extends CabalBase {
   private async createSandbox() {
     return runProcess(
       'cabal',
-      ['sandbox', 'init'],
+      [await this.withPrefix('sandbox'), 'init'],
       this.spawnOpts,
       this.opts.opts,
     )
   }
 
-  private async commonBuild() {
-    this.cabalArgs.push('--builddir=' + getCabalOpts().buildDir)
-    return this.runCabal()
+  private async commonBuild(
+    command: 'build' | 'test' | 'bench' | 'install' | 'clean',
+    args: string[],
+    override: Partial<IParams> = {},
+  ) {
+    return this.runCabal(
+      [
+        await this.withPrefix(command),
+        ...args,
+        '--builddir=' + getCabalOpts().buildDir,
+      ],
+      override,
+    )
+  }
+
+  private async withPrefix(cmd: string) {
+    const version = (await this.versionPromise).split('.')
+    const major = parseInt(version[0], 10)
+    const minor = parseInt(version[1], 10)
+    if (major > 2 || (major == 2 && minor >= 4)) {
+      return `v1-${cmd}`
+    } else {
+      return cmd
+    }
   }
 }

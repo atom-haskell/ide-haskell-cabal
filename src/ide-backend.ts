@@ -10,7 +10,7 @@ import {
 import * as UPI from 'atom-haskell-upi'
 
 interface BuilderParamType {
-  name: 'cabal' | 'stack' | 'cabal-nix' | 'none'
+  name: 'cabal-v1' | 'cabal-v2' | 'stack' | 'none'
 }
 
 function isCabalFile(file?: File | Directory): file is File {
@@ -135,13 +135,11 @@ export class IdeBackend {
     return {
       items: (): BuilderParamType[] => {
         const builders: BuilderParamType[] = [
-          { name: 'cabal' },
+          { name: 'cabal-v1' },
+          { name: 'cabal-v2' },
           { name: 'stack' },
+          { name: 'none' },
         ]
-        if (atom.config.get('ide-haskell-cabal.enableNixBuild')) {
-          builders.push({ name: 'cabal-nix' })
-        }
-        builders.push({ name: 'none' })
         return builders
       },
       itemTemplate: (item: BuilderParamType) =>
@@ -298,6 +296,13 @@ export class IdeBackend {
       if (builderParam === undefined) {
         throw new Error('Builder undefined')
       }
+      if ((builderParam.name as string) === 'cabal') {
+        builderParam.name = 'cabal-v1'
+        this.upi.setConfigParam<BuilderParamType>('builder', builderParam)
+      } else if ((builderParam.name as string) === 'cabal-nix') {
+        builderParam.name = 'cabal-v2'
+        this.upi.setConfigParam<BuilderParamType>('builder', builderParam)
+      }
 
       this.upi.setStatus({
         status: 'progress',
@@ -361,8 +366,8 @@ export class IdeBackend {
         }
       }
       const builders: TBuilders = {
-        'cabal-nix': Builders.CabalNix,
-        cabal: Builders.Cabal,
+        'cabal-v1': Builders.CabalV1,
+        'cabal-v2': Builders.CabalV2,
         stack: Builders.Stack,
         none: Builders.None,
       }
