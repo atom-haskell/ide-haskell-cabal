@@ -2,9 +2,6 @@ import { CtorOpts, ResultType, IParams } from './base'
 import { CabalBase, getCabalOpts } from './base/cabal'
 
 export class Builder extends CabalBase {
-  // TODO:
-  //   * Commands other than 'build'
-  //   * Support for buildDir
   constructor(opts: CtorOpts) {
     super(opts)
   }
@@ -50,14 +47,7 @@ export class Builder extends CabalBase {
       override,
     )
   }
-  private async withPrefix(cmd: string) {
-    const version = (await this.versionPromise).split('.')
-    const major = parseInt(version[0], 10)
-    const minor = parseInt(version[1], 10)
-    if (major > 2 || (major == 2 && minor >= 4)) {
-      return `v2-${cmd}`
-    } else {
-      return `new-${cmd}`
-    }
+  protected async withPrefix(cmd: string) {
+    return super.withPrefix(cmd, { oldprefix: 'new-', newprefix: 'v2-' })
   }
 }

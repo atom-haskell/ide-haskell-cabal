@@ -112,14 +112,7 @@ export class Builder extends CabalBase {
     )
   }
 
-  private async withPrefix(cmd: string) {
-    const version = (await this.versionPromise).split('.')
-    const major = parseInt(version[0], 10)
-    const minor = parseInt(version[1], 10)
-    if (major > 2 || (major == 2 && minor >= 4)) {
-      return `v1-${cmd}`
-    } else {
-      return cmd
-    }
+  protected async withPrefix(cmd: string) {
+    return super.withPrefix(cmd, { oldprefix: '', newprefix: 'v1-' })
   }
 }
