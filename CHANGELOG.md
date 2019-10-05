@@ -1,3 +1,12 @@
+## 2.3.0
+
+-   Cabal-install v3.0 compatibility
+-   Rename builders `cabal` to `cabal-v1` and `cabal-nix` to `cabal-v2` to align better with official cabal naming scheme.
+-   Remove `Enable Nix Build` option: `cabal-v2` aka `cabal-nix` is always enabled now. Notice `cabal-v2` is incompatible with ghc-mod (if you're using it).
+-   Add GHC 8.8 to list of compilers
+-   Bump dependencies
+-   Refactors
+
 ## 2.2.1
 
 -   Tweak start-of-message regex for compatibility with new cabal
