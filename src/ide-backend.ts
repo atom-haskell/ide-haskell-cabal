@@ -273,7 +273,7 @@ export class IdeBackend {
 
   private async cabalBuild(
     cmd: CabalCommand,
-    opts: Builders.IParams,
+    params: Builders.IParams,
   ): Promise<void> {
     try {
       if (this.running) {
@@ -306,7 +306,7 @@ export class IdeBackend {
 
       this.upi.setStatus({
         status: 'progress',
-        progress: opts.onProgress ? 0.0 : undefined,
+        progress: params.onProgress ? 0.0 : undefined,
         detail: '',
       })
 
@@ -381,7 +381,7 @@ export class IdeBackend {
       }
 
       const res = await new builder({
-        opts,
+        params,
         target: newTarget,
         cabalRoot,
       }).runCommand(cmd)

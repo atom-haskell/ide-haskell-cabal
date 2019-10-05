@@ -14,12 +14,14 @@ export class Builder extends CabalBase {
   }
   public async test() {
     const severityChangeRx = {}
-    severityChangeRx[this.opts.opts.severity] = /Running \d+ test suites\.\.\./
+    severityChangeRx[
+      this.opts.params.severity
+    ] = /Running \d+ test suites\.\.\./
     return this.commonBuild('test', [], { severityChangeRx, severity: 'build' })
   }
   public async bench(): Promise<ResultType> {
     const severityChangeRx = {}
-    severityChangeRx[this.opts.opts.severity] = /Running \d+ benchmarks\.\.\./
+    severityChangeRx[this.opts.params.severity] = /Running \d+ benchmarks\.\.\./
     return this.commonBuild('bench', [], {
       severityChangeRx,
       severity: 'build',

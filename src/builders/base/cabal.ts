@@ -43,7 +43,7 @@ export abstract class CabalBase extends BuilderBase {
       child_process.execFile(
         'cabal',
         ['--numeric-version'],
-        this.spawnOpts,
+        this.getSpawnOpts(),
         (error, stdout) => {
           if (error) reject(error)
           else {

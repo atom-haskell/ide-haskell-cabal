@@ -12,7 +12,9 @@ export class Builder extends CabalBase {
   }
   public async test() {
     const severityChangeRx = {}
-    severityChangeRx[this.opts.opts.severity] = /Running \d+ test suites\.\.\./
+    severityChangeRx[
+      this.opts.params.severity
+    ] = /Running \d+ test suites\.\.\./
     return this.commonBuild('test', ['--only', '--show-details=always'], {
       severityChangeRx,
       severity: 'build',
@@ -20,7 +22,7 @@ export class Builder extends CabalBase {
   }
   public async bench() {
     const severityChangeRx = {}
-    severityChangeRx[this.opts.opts.severity] = /Running \d+ benchmarks\.\.\./
+    severityChangeRx[this.opts.params.severity] = /Running \d+ benchmarks\.\.\./
     return this.commonBuild('bench', ['--only', '--show-details=always'], {
       severityChangeRx,
       severity: 'build',
@@ -32,7 +34,7 @@ export class Builder extends CabalBase {
   public async deps() {
     const igns = atom.config.get('ide-haskell-cabal.cabal.ignoreNoSandbox')
     const sandboxConfig =
-      this.spawnOpts.env.CABAL_SANDBOX_CONFIG || 'cabal.sandbox.config'
+      this.getSpawnOpts().env.CABAL_SANDBOX_CONFIG || 'cabal.sandbox.config'
     const se = this.opts.cabalRoot.getFile(sandboxConfig).existsSync()
     if (!(se || igns)) {
       const res = await new Promise<{ exitCode: number; hasError: boolean }>(
@@ -90,8 +92,8 @@ export class Builder extends CabalBase {
     return runProcess(
       'cabal',
       [await this.withPrefix('sandbox'), 'init'],
-      this.spawnOpts,
-      this.opts.opts,
+      this.getSpawnOpts(),
+      this.opts.params,
     )
   }
 

@@ -7,7 +7,7 @@ import { Directory } from 'atom'
 export { IParams }
 
 export interface CtorOpts {
-  readonly opts: IParams
+  readonly params: IParams
   readonly target: TargetParamTypeForBuilder
   readonly cabalRoot: Directory
 }
@@ -27,11 +27,6 @@ const defaultGlobals = {
 }
 
 export abstract class BuilderBase implements Builder {
-  protected readonly spawnOpts: {
-    cwd: string
-    detached: boolean
-    env: { [key: string]: string | undefined }
-  }
   private readonly globals: typeof defaultGlobals
 
   constructor(
@@ -40,7 +35,6 @@ export abstract class BuilderBase implements Builder {
     globals: object = {},
   ) {
     this.globals = { ...defaultGlobals, ...globals }
-    this.spawnOpts = this.getSpawnOpts()
   }
 
   public async runCommand(cmd: CabalCommand): Promise<ResultType> {
@@ -57,22 +51,27 @@ export abstract class BuilderBase implements Builder {
     args: string[],
     override: Partial<IParams> = {},
   ): Promise<ResultType> {
-    return this.globals.runProcess(this.processName, args, this.spawnOpts, {
-      ...this.opts.opts,
-      ...override,
-    })
+    return this.globals.runProcess(
+      this.processName,
+      args,
+      this.getSpawnOpts(),
+      {
+        ...this.opts.params,
+        ...override,
+      },
+    )
   }
 
   protected additionalEnvSetup(env: typeof process.env): typeof process.env {
     return env
   }
 
-  private getSpawnOpts() {
+  protected getSpawnOpts() {
     // Setup default opts
     const opts = {
       cwd: this.opts.cabalRoot.getPath(),
       detached: true,
-      env: {},
+      env: {} as { [key: string]: string | undefined },
     }
 
     const env = { ...this.globals.process.env }
