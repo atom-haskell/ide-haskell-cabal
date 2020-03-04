@@ -1,7 +1,7 @@
 {
   "name": "ide-haskell-cabal",
   "main": "./lib/ide-haskell-cabal",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Provides Cabal backend for ide-haskell",
   "keywords": [
     "ide-haskell",
