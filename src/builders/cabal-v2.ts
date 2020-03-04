@@ -47,15 +47,9 @@ export class Builder extends CabalBase {
       override,
     )
   }
+  // overrides CabalBase.component()
   protected component() {
-    switch (this.opts.target.type) {
-      case 'all':
-        return this.opts.target.targets.map((x) => this.opts.target.project + ":" + x.target)
-      case 'component':
-        return [this.opts.target.project + ":" + this.opts.target.component]
-      case 'auto':
-        return []
-    }
+    return super.component().map((x) => `${this.opts.target.project}:${x}`)
   }
   protected async withPrefix(cmd: string) {
     return super.withPrefix(cmd, { oldprefix: 'new-', newprefix: 'v2-' })
