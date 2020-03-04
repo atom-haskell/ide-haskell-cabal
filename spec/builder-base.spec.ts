@@ -17,18 +17,14 @@ class BuilderMock extends BuilderBase {
       runProcess: (command: any, args: any, spawn: any, opts1: any) => {
         expect(command).to.equal('mock')
         expect(args).to.deep.equal(['extra', 'args'])
-        expect(spawn).to.deep.equal(this.spawnOpts)
-        expect(opts1).to.deep.equal(opts.opts)
+        expect(spawn).to.deep.equal(this.getSpawnOpts())
+        expect(opts1).to.deep.equal(this.opts.params)
       },
     })
   }
 
   public spawnOptsTest() {
-    return this.spawnOpts
-  }
-
-  public cabalArgsTest() {
-    return this.cabalArgs
+    return this.getSpawnOpts()
   }
 
   public async run() {
@@ -56,11 +52,10 @@ describe('BuilderBase', function() {
   describe('construction', () => {
     it('should construct and set spawnOpts', async () => {
       const builder = new BuilderMock({
-        opts: { severity: 'build' },
+        params: { severity: 'build' },
         target: { type: 'auto', project: 'All', dir: undefined },
         cabalRoot: new Directory('/cabal/root'),
       })
-      expect(builder.cabalArgsTest()).to.deep.equal([])
       expect(builder.spawnOptsTest()).to.deep.equal({
         cwd: '/cabal/root',
         detached: true,
@@ -72,7 +67,7 @@ describe('BuilderBase', function() {
     it('sets PATH correctly on win32', async () => {
       const builder = new BuilderMock(
         {
-          opts: { severity: 'build' },
+          params: { severity: 'build' },
           target: { type: 'auto', project: 'All', dir: undefined },
           cabalRoot: new Directory('/cabal/root'),
         },
@@ -89,7 +84,7 @@ describe('BuilderBase', function() {
     it('does not honor non-capitalized PATH on non-win32', async () => {
       const builder = new BuilderMock(
         {
-          opts: { severity: 'build' },
+          params: { severity: 'build' },
           target: { type: 'auto', project: 'All', dir: undefined },
           cabalRoot: new Directory('/cabal/root'),
         },
@@ -105,7 +100,7 @@ describe('BuilderBase', function() {
   describe('runCabal', () => {
     it('should call runProcess', async () => {
       const builder = new BuilderMock({
-        opts: { severity: 'build' },
+        params: { severity: 'build' },
         target: { type: 'auto', project: 'All', dir: undefined },
         cabalRoot: new Directory('/cabal/root'),
       })
