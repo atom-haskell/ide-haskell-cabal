@@ -1,3 +1,13 @@
+## 2.4.0
+
+-   Use fully qualified component name in cabal-v2 builds
+
+    In a directory structure with multiple packages, each with a component
+    with the same name, we must use the fully qualified name. For example,
+    instead of just using test:test (the test suite named test) we
+    should use foo:test:test (the test suite named test in package
+    foo). See [PR #25](https://github.com/atom-haskell/ide-haskell-cabal/pull/25) for more information.
+
 ## 2.3.0
 
 -   Cabal-install v3.0 compatibility
