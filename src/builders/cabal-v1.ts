@@ -88,6 +88,10 @@ export class Builder extends CabalBase {
     return env
   }
 
+  protected async withPrefix(cmd: string) {
+    return super.withPrefix(cmd, { oldprefix: '', newprefix: 'v1-' })
+  }
+
   private async createSandbox() {
     return runProcess(
       'cabal',
@@ -110,9 +114,5 @@ export class Builder extends CabalBase {
       ],
       override,
     )
-  }
-
-  protected async withPrefix(cmd: string) {
-    return super.withPrefix(cmd, { oldprefix: '', newprefix: 'v1-' })
   }
 }

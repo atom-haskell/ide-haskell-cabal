@@ -298,10 +298,10 @@ export class IdeBackend {
       }
       if ((builderParam.name as string) === 'cabal') {
         builderParam.name = 'cabal-v1'
-        this.upi.setConfigParam<BuilderParamType>('builder', builderParam)
+        await this.upi.setConfigParam<BuilderParamType>('builder', builderParam)
       } else if ((builderParam.name as string) === 'cabal-nix') {
         builderParam.name = 'cabal-v2'
-        this.upi.setConfigParam<BuilderParamType>('builder', builderParam)
+        await this.upi.setConfigParam<BuilderParamType>('builder', builderParam)
       }
 
       this.upi.setStatus({

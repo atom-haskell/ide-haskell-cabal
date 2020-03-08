@@ -15,7 +15,8 @@ export type TargetParamType = (
     }
   | {
       type: 'auto'
-    }) &
+    }
+) &
   ProjectDesc
 export type TargetParamTypeForBuilder = (
   | {
@@ -28,6 +29,7 @@ export type TargetParamTypeForBuilder = (
     }
   | {
       type: 'auto'
-    }) &
+    }
+) &
   ProjectDesc
 export type CabalCommand = 'build' | 'clean' | 'test' | 'bench' | 'deps'

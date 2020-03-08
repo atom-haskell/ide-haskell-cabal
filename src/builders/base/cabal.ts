@@ -15,8 +15,8 @@ declare module 'atom' {
 }
 
 export abstract class CabalBase extends BuilderBase {
-  protected versionPromise: Promise<CabalVersion>
   private static cabalVersionMap = new Map<string, CabalVersion>()
+  protected versionPromise: Promise<CabalVersion>
 
   constructor(opts: CtorOpts, globals: object = {}) {
     super('cabal', opts, globals)
@@ -53,7 +53,7 @@ export abstract class CabalBase extends BuilderBase {
     { oldprefix, newprefix }: { oldprefix: string; newprefix: string },
   ) {
     const v = await this.versionPromise
-    if (v.major > 2 || (v.major == 2 && v.minor >= 4)) {
+    if (v.major > 2 || (v.major === 2 && v.minor >= 4)) {
       return `${newprefix}${cmd}`
     } else {
       return `${oldprefix}${cmd}`
@@ -88,10 +88,10 @@ Atom: ${atom.getVersion()}
 OS: ${process.platform}
 Released: ${atom.isReleasedVersion()}
 IDE-Haskell-Cabal: ${
-                atom.packages.getLoadedPackage('ide-haskell-cabal')!.metadata
+                atom.packages.getLoadedPackage('ide-haskell-cabal')?.metadata
                   .version
               }
-IDE-Haskell: ${atom.packages.getLoadedPackage('ide-haskell')!.metadata.version}
+IDE-Haskell: ${atom.packages.getLoadedPackage('ide-haskell')?.metadata.version}
 Error Message: ${error.message}
 Error Stack:
 ${error.stack}

@@ -33,6 +33,13 @@ export class Builder extends CabalBase {
     )
     throw new Error("Command 'deps' is not implemented for cabal-v2")
   }
+  // overrides CabalBase.component()
+  protected component() {
+    return super.component().map((x) => `${this.opts.target.project}:${x}`)
+  }
+  protected async withPrefix(cmd: string) {
+    return super.withPrefix(cmd, { oldprefix: 'new-', newprefix: 'v2-' })
+  }
   private async commonBuild(
     command: 'build' | 'test' | 'bench' | 'install' | 'clean',
     args: string[],
@@ -46,12 +53,5 @@ export class Builder extends CabalBase {
       ],
       override,
     )
-  }
-  // overrides CabalBase.component()
-  protected component() {
-    return super.component().map((x) => `${this.opts.target.project}:${x}`)
-  }
-  protected async withPrefix(cmd: string) {
-    return super.withPrefix(cmd, { oldprefix: 'new-', newprefix: 'v2-' })
   }
 }
