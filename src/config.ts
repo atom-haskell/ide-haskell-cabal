@@ -29,6 +29,7 @@ const ghcVerProps = {
 }
 
 const ghcVersList = [
+  '8.10',
   '8.8',
   '8.6',
   '8.4',
@@ -148,6 +149,7 @@ declare module 'atom' {
       depsArguments: any[]
     }
     'ide-haskell-cabal.cabal.ignoreNoSandbox': boolean
+    'ide-haskell-cabal.cabal.runHpack': boolean
     'ide-haskell-cabal.cabal.activeGhcVersion':
       | '7.2'
       | '7.4'
@@ -159,6 +161,7 @@ declare module 'atom' {
       | '8.4'
       | '8.6'
       | '8.8'
+      | '8.10'
     'ide-haskell-cabal.cabal.ghc702.pathExclusive': boolean
     'ide-haskell-cabal.cabal.ghc702.pathTo': any[]
     'ide-haskell-cabal.cabal.ghc702.sandbox': string
@@ -259,6 +262,16 @@ declare module 'atom' {
       sandbox: string
       buildDir: string
     }
+    'ide-haskell-cabal.cabal.ghc810.pathExclusive': boolean
+    'ide-haskell-cabal.cabal.ghc810.pathTo': any[]
+    'ide-haskell-cabal.cabal.ghc810.sandbox': string
+    'ide-haskell-cabal.cabal.ghc810.buildDir': string
+    'ide-haskell-cabal.cabal.ghc810': {
+      pathExclusive: boolean
+      pathTo: any[]
+      sandbox: string
+      buildDir: string
+    }
     'ide-haskell-cabal.cabal': {
       ignoreNoSandbox: boolean
       runHpack: boolean
@@ -273,6 +286,7 @@ declare module 'atom' {
         | '8.4'
         | '8.6'
         | '8.8'
+        | '8.10'
       'ghc702.pathExclusive': boolean
       'ghc702.pathTo': any[]
       'ghc702.sandbox': string
@@ -373,6 +387,16 @@ declare module 'atom' {
         sandbox: string
         buildDir: string
       }
+      'ghc810.pathExclusive': boolean
+      'ghc810.pathTo': any[]
+      'ghc810.sandbox': string
+      'ghc810.buildDir': string
+      ghc810: {
+        pathExclusive: boolean
+        pathTo: any[]
+        sandbox: string
+        buildDir: string
+      }
     }
     'ide-haskell-cabal': {
       'stack.globalArguments': any[]
@@ -402,6 +426,7 @@ declare module 'atom' {
         | '8.4'
         | '8.6'
         | '8.8'
+        | '8.10'
       'cabal.ghc702.pathExclusive': boolean
       'cabal.ghc702.pathTo': any[]
       'cabal.ghc702.sandbox': string
@@ -502,6 +527,16 @@ declare module 'atom' {
         sandbox: string
         buildDir: string
       }
+      'cabal.ghc810.pathExclusive': boolean
+      'cabal.ghc810.pathTo': any[]
+      'cabal.ghc810.sandbox': string
+      'cabal.ghc810.buildDir': string
+      'cabal.ghc810': {
+        pathExclusive: boolean
+        pathTo: any[]
+        sandbox: string
+        buildDir: string
+      }
       cabal: {
         ignoreNoSandbox: boolean
         runHpack: boolean
@@ -516,6 +551,7 @@ declare module 'atom' {
           | '8.4'
           | '8.6'
           | '8.8'
+          | '8.10'
         'ghc702.pathExclusive': boolean
         'ghc702.pathTo': any[]
         'ghc702.sandbox': string
@@ -611,6 +647,16 @@ declare module 'atom' {
         'ghc808.sandbox': string
         'ghc808.buildDir': string
         ghc808: {
+          pathExclusive: boolean
+          pathTo: any[]
+          sandbox: string
+          buildDir: string
+        }
+        'ghc810.pathExclusive': boolean
+        'ghc810.pathTo': any[]
+        'ghc810.sandbox': string
+        'ghc810.buildDir': string
+        ghc810: {
           pathExclusive: boolean
           pathTo: any[]
           sandbox: string
