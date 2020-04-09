@@ -109,6 +109,15 @@ export const config = {
         default: false,
         order: 1000,
       },
+      runHpack: {
+        type: 'boolean',
+        title: 'Run hpack before cabal',
+        description:
+          'When package.yaml is detected in the same directory as ' +
+          'the cabal file, run hpack first',
+        default: true,
+        order: 10,
+      },
       activeGhcVersion: {
         type: 'string',
         title: 'Active GHC version',
@@ -252,6 +261,7 @@ declare module 'atom' {
     }
     'ide-haskell-cabal.cabal': {
       ignoreNoSandbox: boolean
+      runHpack: boolean
       activeGhcVersion:
         | '7.2'
         | '7.4'
@@ -380,6 +390,7 @@ declare module 'atom' {
         depsArguments: any[]
       }
       'cabal.ignoreNoSandbox': boolean
+      'cabal.runHpack': boolean
       'cabal.activeGhcVersion':
         | '7.2'
         | '7.4'
@@ -493,6 +504,7 @@ declare module 'atom' {
       }
       cabal: {
         ignoreNoSandbox: boolean
+        runHpack: boolean
         activeGhcVersion:
           | '7.2'
           | '7.4'

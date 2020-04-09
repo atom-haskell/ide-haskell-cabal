@@ -106,6 +106,11 @@ export class Builder extends CabalBase {
     args: string[],
     override: Partial<IParams> = {},
   ) {
+    if (atom.config.get('ide-haskell-cabal.cabal.runHpack')) {
+      if (await this.opts.cabalRoot.getFile('package.yaml').exists()) {
+        await runProcess('hpack', [], this.getSpawnOpts(), this.opts.params)
+      }
+    }
     return this.runCabal(
       [
         await this.withPrefix(command),
