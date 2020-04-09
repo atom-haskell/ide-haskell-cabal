@@ -3,7 +3,7 @@
 -   Add GHC 8.10
 -   Option to run hpack before cabal
 
-    When `package.yaml` is detected next to a cabal file, will try to run hpack if `ide-haskell-cabal.cabal.runHpack` option is enabled (yes by default)
+    When `package.yaml` is detected next to a cabal file, will try to run hpack if `ide-haskell-cabal.cabal.runHpack` option is enabled (disabled by default)
 
 -   Order GHC versions in settings
 -   Bump dependencies; code lints

@@ -116,7 +116,7 @@ export const config = {
         description:
           'When package.yaml is detected in the same directory as ' +
           'the cabal file, run hpack first',
-        default: true,
+        default: false,
         order: 10,
       },
       activeGhcVersion: {

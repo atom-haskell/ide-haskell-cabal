@@ -83,6 +83,12 @@ function runBuilderProcess(
   let hasError = false
   let severity: UPI.TSeverity = params.severity
   const proc = child_process.spawn(command, args, options)
+  proc.on('error', function(err) {
+    atom.notifications.addError(err.name, {
+      detail: err.message,
+      dismissable: true,
+    })
+  })
 
   const buffered = (handleOutput: (lines: string[]) => void) => {
     let buffer = ''
