@@ -29,18 +29,19 @@ const ghcVerProps = {
 }
 
 const ghcVersList = [
-  '7.2',
-  '7.4',
-  '7.6',
-  '7.8',
-  '7.10',
-  '8.0',
-  '8.2',
-  '8.4',
-  '8.6',
   '8.8',
+  '8.6',
+  '8.4',
+  '8.2',
+  '8.0',
+  '7.10',
+  '7.8',
+  '7.6',
+  '7.4',
+  '7.2',
 ]
 const ghcVersProps = {}
+let orderStart = 100
 for (const vers of ghcVersList) {
   const [maj, min] = vers.split('.')
   const key = `ghc${maj}${min.length === 1 ? `0${min}` : min}`
@@ -48,7 +49,9 @@ for (const vers of ghcVersList) {
     type: 'object',
     title: `GHC ${vers}`,
     properties: ghcVerProps,
+    order: orderStart,
   }
+  orderStart += 10
 }
 
 export const config = {
@@ -104,12 +107,14 @@ export const config = {
           'Installing dependencies with no project sandbox is not ' +
           'recommended, but you can do it if you enable this option',
         default: false,
+        order: 1000,
       },
       activeGhcVersion: {
         type: 'string',
         title: 'Active GHC version',
         default: '8.6',
         enum: ghcVersList,
+        order: 99,
       },
       ...ghcVersProps,
     },
