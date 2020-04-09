@@ -1,3 +1,13 @@
+## 2.5.0
+
+-   Add GHC 8.10
+-   Option to run hpack before cabal
+
+    When `package.yaml` is detected next to a cabal file, will try to run hpack if `ide-haskell-cabal.cabal.runHpack` option is enabled (yes by default)
+
+-   Order GHC versions in settings
+-   Bump dependencies; code lints
+
 ## 2.4.0
 
 -   Use fully qualified component name in cabal-v2 builds
