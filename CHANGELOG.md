@@ -1,3 +1,9 @@
+## 2.6.1
+
+-   Spin event loop while builder is running
+
+    This should improve responsiveness in some cases.
+
 ## 2.6.0
 
 -   Bump atom-haskell-utils
