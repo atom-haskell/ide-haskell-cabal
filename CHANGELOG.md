@@ -1,3 +1,9 @@
+## 2.6.0
+
+-   Bump atom-haskell-utils
+
+    This should allow the package to work with cabalfiles up to 3.2, but it's a little experimental. Please open issues if stuff breaks with "Atom-Haskell core error".
+
 ## 2.5.0
 
 -   Add GHC 8.10
