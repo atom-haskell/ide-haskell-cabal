@@ -7,7 +7,9 @@ import * as UPI from 'atom-haskell-upi'
 // // Atom dependencies
 import { Directory, Point } from 'atom'
 
-export interface IParams {
+export type IParams = Omit<IParamsInternal, 'onDone'>
+
+interface IParamsInternal {
   readonly onMsg?: (msg: UPI.IResultItem) => void
   readonly onProgress?: (progress: number) => void
   readonly onDone?: (done: { exitCode: number; hasError: boolean }) => void
@@ -72,7 +74,7 @@ function runBuilderProcess(
   command: string,
   args: string[],
   options: child_process.SpawnOptions,
-  params: IParams,
+  params: IParamsInternal,
 ) {
   const cwd = new Directory(options.cwd || '.')
   // cabal returns failure when there are type errors _or_ when it can't
@@ -188,8 +190,16 @@ export async function runProcess(
   options: child_process.SpawnOptions,
   pars: IParams,
 ) {
-  return new Promise<{ exitCode: number; hasError: boolean }>((resolve) => {
-    const newPars: typeof pars = { ...pars, onDone: resolve }
-    runBuilderProcess(command, args, options, newPars)
-  })
+  let interval: number | undefined = undefined
+  try {
+    interval = window.setInterval(() => process.activateUvLoop(), 100)
+    return await new Promise<{ exitCode: number; hasError: boolean }>(
+      (resolve) => {
+        const newPars: IParamsInternal = { ...pars, onDone: resolve }
+        runBuilderProcess(command, args, options, newPars)
+      },
+    )
+  } finally {
+    if (interval !== undefined) window.clearInterval(interval)
+  }
 }
